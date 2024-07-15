@@ -160,7 +160,7 @@ class RegisterWindow:
             messagebox.showinfo("", "Success!")
             self.cancel_reg()
         except sqlite3.IntegrityError:
-            messagebox.showinfo("", "Someone thought of this before you! Make it unique!!")
+            messagebox.showinfo("", "Someone thought of this before you! Make it unique!")
         finally:
             connection.close()
 
