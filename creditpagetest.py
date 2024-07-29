@@ -22,7 +22,6 @@ def fetch_subject_details(student_id):
         subjects = user_data[1:]
         return year_level, subjects
 
-
 class CreditSummaryWindow:
     def __init__(self, student_id):
         self.student_id = student_id
