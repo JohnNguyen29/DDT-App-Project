@@ -1,6 +1,7 @@
 import customtkinter
 import customtkinter as ctk
 from tkinter import messagebox
+from PIL import Image
 import sqlite3
 import subprocess
 
@@ -37,6 +38,16 @@ class LoginFront:
         self.root.geometry("600x500")
 
         connect_db()
+
+        self.label_font = ctk.CTkFont(size=14)
+        self.button_font = ctk.CTkFont(size=14)
+
+        # Add logo to the login page
+        self.logo_image = Image.open("/users/nguyennguyen/desktop/NSLogo.png")
+        self.logo_image = self.logo_image.resize((200, 200))
+        self.logo = ctk.CTkImage(self.logo_image)
+        self.logo_label = ctk.CTkLabel(self.root, image=self.logo, text="")
+        self.logo_label.pack(pady=10)
 
         self.frame = ctk.CTkFrame(branch)
         self.frame.place(relx=0.5, rely=0.5, anchor='center')
@@ -76,7 +87,7 @@ class LoginFront:
         # If the user details are correct, they will get redirected to the landing page. Otherwise they will get an error message
         if user:
             self.root.destroy()
-            subprocess.run(["python3", "test.py"])
+            subprocess.run(["python3", "landingpagetest.py"])
         else:
             messagebox.showinfo("", "Incorrect Student ID or Password. Please try again")
 
@@ -92,6 +103,9 @@ class RegisterWindow:
         self.label_font = ctk.CTkFont(size=14)
         self.button_font = ctk.CTkFont(size=14)
 
+        ctk.CTkLabel(register_window, text="Please enter the subject code e.g. 13MAT, 13ENG etc",
+                     font=self.label_font).place(x=10, y=10)
+
         # Conbined the user inputs into a list so the code is smaller and efficient.
         self.entries = {}
         labels = [
@@ -102,9 +116,9 @@ class RegisterWindow:
         # Give all the labels the same settings on the page.
         # Added a line when the user inputs their password, a '*' is shown instead of the character for privacy
         for i, label in enumerate(labels):
-            ctk.CTkLabel(register_window, text=label, font=self.label_font).place(x=10, y=10 + 50 * i)
+            ctk.CTkLabel(register_window, text=label, font=self.label_font).place(x=10, y=30 + 50 * i)
             self.entries[label] = ctk.CTkEntry(register_window, show="*" if "Password" in label else None)
-            self.entries[label].place(x=160, y=10 + 50 * i)
+            self.entries[label].place(x=160, y=30 + 50 * i)
         # Submit and cancel buttons on the register page
         ctk.CTkButton(register_window, text="Submit", command=self.register_backend, height=2, width=10,
                       font=self.button_font).place(x=10, y=520)
