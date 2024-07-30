@@ -25,7 +25,7 @@ def overlay_image():
     label.pack()
 
 def open_credit_summary():
-    subprocess.run(["python3", "creditpgtest.py"])
+    subprocess.run(["python3", "creditpg.py"])
 
 # Navigation frame
 nav_frame = ctk.CTkFrame(root, width=200)

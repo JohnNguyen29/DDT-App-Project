@@ -86,5 +86,5 @@ class CreditSummaryWindow:
 
 if __name__ == "__main__":
     # Example student ID to fetch details
-    student_id = "student123"
+    student_id = "22656"
     CreditSummaryWindow(student_id)
