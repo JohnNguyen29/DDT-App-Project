@@ -1,9 +1,6 @@
-import customtkinter
 import customtkinter as ctk
 from tkinter import messagebox
-from PIL import Image, ImageTk  # Import the PIL library
 import sqlite3
-import subprocess
 
 def fetch_subject_details(student_id):
     with sqlite3.connect("users.db") as connection:
@@ -61,28 +58,63 @@ class CreditSummaryWindow:
             ctk.CTkLabel(table_frame, text=header, font=title_font).grid(row=0, column=col, padx=10, pady=10)
 
         # Sample data to show (Replace with actual data fetching logic)
-        assessments = [
-            ["Internal", 4, "A", 4],
-            ["External", 5, "E", 5],
-            ["Internal", 6, "M", 6],
-            ["Internal", 3, "A", 3],
-            ["Internal", 6, "M", 6],
-            ["External", 4, "E", 4]
-        ]
+        assessments = {
+            "13MAT": [
+                ["Algebra", 4, "", 0],
+                ["Calculus", 5, "", 0]
+            ],
+            "13ENG": [
+                ["Essay", 6, "", 0],
+                ["Research", 3, "", 0]
+            ],
+            "13PHY": [
+                ["Mechanics", 6, "", 0],
+                ["Electricity", 4, "", 0]
+            ]
+        }
+
+        self.grade_entries = {}  # Dictionary to store grade entries
 
         for row, subject_code in enumerate(subjects, start=1):
-            full_subject = f"{subject_code} - {subject_details.get(subject_code, 'Unknown Subject')}"
-            ctk.CTkLabel(table_frame, text=full_subject).grid(row=row, column=0, padx=10, pady=10)
+            full_subject = f"{year_level}{subject_code} - {subject_details.get(f'{year_level}{subject_code}', 'Unknown Subject')}"
+            subject_label = ctk.CTkLabel(table_frame, text=full_subject)
+            subject_label.grid(row=row, column=0, padx=10, pady=10)
 
-            for col, value in enumerate(assessments[row - 1]):
-                ctk.CTkLabel(table_frame, text=value).grid(row=row, column=col + 1, padx=10, pady=10)
+            subject_label.bind("<Button-1>", lambda e, sc=f"{year_level}{subject_code}", r=row: self.toggle_assessment_display(sc, r, table_frame, assessments))
 
-        ctk.CTkButton(self.root, text="Add Credits", command=self.add_credits).pack(pady=10)
+    def toggle_assessment_display(self, subject_code, row, table_frame, assessments):
+        for widget in table_frame.grid_slaves():
+            if int(widget.grid_info()["row"]) > row:
+                widget.grid_forget()
+
+        if hasattr(self, 'last_opened') and self.last_opened == subject_code:
+            self.last_opened = None
+            return
+
+        self.last_opened = subject_code
+        for i, assessment in enumerate(assessments.get(subject_code, [])):
+            for col, value in enumerate(assessment):
+                if col == 2:  # If it's the "Grade Achieved" column
+                    grade_entry = ctk.CTkEntry(table_frame)
+                    grade_entry.grid(row=row + i + 1, column=col + 1, padx=10, pady=10)
+                    self.grade_entries[f"{subject_code}_{i}"] = grade_entry
+                else:
+                    ctk.CTkLabel(table_frame, text=value).grid(row=row + i + 1, column=col + 1, padx=10, pady=10)
+
+        ctk.CTkButton(table_frame, text="Save Grades", command=self.save_grades).grid(row=row + len(assessments.get(subject_code, [])) + 1, columnspan=5, pady=10)
+
+    def save_grades(self):
+        for key, entry in self.grade_entries.items():
+            subject_code, index = key.split('_')
+            grade = entry.get()
+            # Update the corresponding assessment data with the entered grade
+            assessments[subject_code][int(index)][2] = grade
+            # Logic to save the grades to the database can be added here
+            print(f"Saved {grade} for {subject_code} assessment {index}")
 
     def add_credits(self):
         # Logic to add credits
         pass
-
 
 if __name__ == "__main__":
     # Example student ID to fetch details
