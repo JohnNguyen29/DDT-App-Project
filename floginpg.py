@@ -12,20 +12,27 @@ class LoginApp:
         self.root.geometry("400x300")
 
         self.initialize_db()
-        self.populate_db()
 
-        tk.Label(root, text="Username").place(x=10, y=10)
-        tk.Label(root, text="Password").place(x=10, y=40)
+        self.frame = tk.Frame(root)
+        self.frame.place(relx=0.5, rely=0.5, anchor='center')
 
-        self.e1 = tk.Entry(root)
-        self.e1.place(x=140, y=10)
+        self.label_font = ('Helvetica', 14)
+        self.entry_font = ('Helvetica', 14)
+        self.button_font = ('Helvetica', 14)
 
-        self.e2 = tk.Entry(root)
-        self.e2.place(x=140, y=40)
-        self.e2.config(show="*")
+        tk.Label(self.frame, text="Username", font=self.label_font).grid(row=0, column=0, pady=10)
+        tk.Label(self.frame, text="Password", font=self.label_font).grid(row=1, column=0, pady=10)
 
-        tk.Button(root, text="Login", command=self.login_user, height=2, width=10).place(x=10, y=100)
-        tk.Button(root, text="Register", command=self.register_user, height=2, width=10).place(x=140, y=100)
+        self.e1 = tk.Entry(self.frame, font=self.entry_font)
+        self.e1.grid(row=0, column=1, pady=10, padx=10)
+
+        self.e2 = tk.Entry(self.frame, font=self.entry_font, show="*")
+        self.e2.grid(row=1, column=1, pady=10, padx=10)
+
+        tk.Button(self.frame, text="Login", command=self.login, height=2, width=10, font=self.button_font).grid(
+            row=2, column=0, pady=10)
+        tk.Button(self.frame, text="Register", command=self.register, height=2, width=10,
+                  font=self.button_font).grid(row=2, column=1, pady=10)
 
     # Function of creating a table for the users username and password
     def initialize_db(self):
