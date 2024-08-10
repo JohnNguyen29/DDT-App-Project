@@ -3,6 +3,10 @@ from tkinter import messagebox
 import subprocess
 import sqlite3
 
+# Function of creating a table for the users details such as username, password, name and year level.
+# Changed intialize_db to connect_db to make it more easy to understand the variable
+# Moved the function outside the class so it can run without being in LoginFront.
+# Changed the data collected. Student ID and password to keep things simple and the subject codes of users subjects.
 def connect_db():
     connection = sqlite3.connect("users.db")
     cursor = connection.cursor()
