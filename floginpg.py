@@ -1,11 +1,11 @@
 import customtkinter
 import customtkinter as ctk
 from tkinter import messagebox
-from PIL import Image
+from PIL import Image, ImageTk
 import sqlite3
 import subprocess
 
-# Sets default GUI colour as light mode regardless of the users system light/dark mode
+# Sets default GUI color as light mode regardless of the user's system light/dark mode
 customtkinter.set_appearance_mode("light")
 
 
@@ -46,30 +46,29 @@ class LoginFront:
 
         # Added a logo to the login page. Example on GC
         self.logo_image = Image.open("/users/nguyennguyen/desktop/NSLogo.png")
-        self.logo_image = self.logo_image.resize((200, 200))
         self.logo = ctk.CTkImage(self.logo_image)
         self.logo_label = ctk.CTkLabel(self.root, image=self.logo, text="")
-        self.logo_label.pack(pady=10)
+        self.logo_label.pack(pady=100)
 
-        self.frame = ctk.CTkFrame(branch)
-        self.frame.place(relx=0.5, rely=0.5, anchor='center')
+        # Width and height for the frame
+        # Changed from place to pack to add padding around the frame
+        self.frame = ctk.CTkFrame(self.root, width=400, height=200)
+        self.frame.pack(pady=20, padx=20)
 
-        self.label_font = ctk.CTkFont(size=14)
-        self.button_font = ctk.CTkFont(size=14)
-
-        ctk.CTkLabel(self.frame, text="Student ID", font=self.label_font).grid(row=0, column=0, pady=10)
-        ctk.CTkLabel(self.frame, text="Password", font=self.label_font).grid(row=1, column=0, pady=10)
+        ctk.CTkLabel(self.frame, text="Student ID", font=self.label_font).grid(row=0, column=0, pady=10, padx=10)
+        ctk.CTkLabel(self.frame, text="Password", font=self.label_font).grid(row=1, column=0, pady=10, padx=10)
 
         self.e1 = ctk.CTkEntry(self.frame)
-        self.e1.grid(row=0, column=1, pady=30, padx=30)
+        self.e1.grid(row=0, column=1, pady=10, padx=10)
 
         self.e2 = ctk.CTkEntry(self.frame, show="*")
-        self.e2.grid(row=1, column=1, pady=30, padx=30)
+        self.e2.grid(row=1, column=1, pady=10, padx=10)
 
-        ctk.CTkButton(self.frame, text="Login", command=self.login_backend, height=2, width=10,
-                      font=self.button_font).grid(row=2, column=0, pady=20)
-        ctk.CTkButton(self.frame, text="Register", command=self.register_window, height=2, width=10,
-                      font=self.button_font).grid(row=2, column=1, pady=20)
+        # Login and Register buttons on the login page
+        ctk.CTkButton(self.frame, text="Login", command=self.login_backend, height=40, width=150,
+                      font=self.button_font).grid(row=2, column=0, pady=20, padx=10)
+        ctk.CTkButton(self.frame, text="Register", command=self.register_window, height=40, width=150,
+                      font=self.button_font).grid(row=2, column=1, pady=20, padx=10)
 
     # Function of the register button. It runs and opens the register window
     def register_window(self):
@@ -89,30 +88,38 @@ class LoginFront:
             cursor = connection.cursor()
             cursor.execute('SELECT * FROM user_details WHERE student_id = ? AND password = ?', (student_id, password))
             user = cursor.fetchone()
-        # If the user details are correct, they will get redirected to the landing page. Otherwise they will get an error message
+        # If the user details are correct, they will get redirected to the landing page. Otherwise, they will get an error message
         if user:
-            self.root.destroy()
             subprocess.run(["python3", "landingpagetest.py"])
+            self.root.destroy()
         else:
             messagebox.showinfo("", "Incorrect Student ID or Password. Please try again")
 
 
-# Class of the registration window. Used variable RegisterWindow because what the user will see is the registeration form
+# Class of the registration window. Used variable RegisterWindow because what the user will see is the registration form
 class RegisterWindow:
     # Connects with the function of the register button 'register_window' from the LoginFront class
     def __init__(self, register_window, main_window):
         self.register_window = register_window
         self.main_window = main_window
-        self.register_window.title("Register")
-        self.register_window.geometry("400x700")
+        self.register_window.title("NextSteps Account Register")
+        self.register_window.geometry("700x600")
         # Buttons and labels
         self.label_font = ctk.CTkFont(size=14)
         self.button_font = ctk.CTkFont(size=14)
 
-        ctk.CTkLabel(register_window, text="Please enter the subject code e.g. 13MAT, 13ENG etc",
-                     font=self.label_font).place(x=10, y=10)
+        # Disclaimer at the top of the registration form
+        self.frame = ctk.CTkFrame(self.register_window)
+        self.frame.place(relx=0.5, rely=0.05, anchor='n')
 
-        # Conbined the user inputs into a list so the code is smaller and efficient.
+        ctk.CTkLabel(self.frame,
+                     text="Please enter the first 3 letters of your subjects e.g English = ENG, DDT = DDT etc",
+                     font=self.label_font).pack(pady=10)
+
+        self.form_frame = ctk.CTkFrame(self.register_window)
+        self.form_frame.place(relx=0.5, rely=0.15, anchor='n')
+
+        # Combined the user inputs into a list so the code is smaller and efficient.
         self.entries = {}
         labels = [
             "Full Name", "Year Level", "Student ID", "Password",
@@ -123,14 +130,15 @@ class RegisterWindow:
         # So all the input fields are uniformly spaced out.
         # Added a line when the user inputs their password, a '*' is shown instead of the character for privacy
         for i, label in enumerate(labels):
-            ctk.CTkLabel(register_window, text=label, font=self.label_font).place(x=10, y=30 + 50 * i)
-            self.entries[label] = ctk.CTkEntry(register_window, show="*" if "Password" in label else None)
-            self.entries[label].place(x=160, y=30 + 50 * i)
+            ctk.CTkLabel(self.form_frame, text=label, font=self.label_font).grid(row=i, column=0, pady=5, padx=10,
+                                                                                 sticky="w")
+            self.entries[label] = ctk.CTkEntry(self.form_frame, show="*" if "Password" in label else None)
+            self.entries[label].grid(row=i, column=1, pady=5, padx=10)
         # Submit and cancel buttons on the register page
-        ctk.CTkButton(register_window, text="Submit", command=self.register_backend, height=2, width=10,
-                      font=self.button_font).place(x=10, y=520)
-        ctk.CTkButton(register_window, text="Cancel", command=self.cancel_reg, height=2, width=10,
-                      font=self.button_font).place(x=160, y=520)
+        ctk.CTkButton(self.register_window, text="Submit", command=self.register_backend, height=40, width=150,
+                      font=self.button_font).place(relx=0.3, rely=0.85, anchor='center')
+        ctk.CTkButton(self.register_window, text="Cancel", command=self.cancel_reg, height=40, width=150,
+                      font=self.button_font).place(relx=0.7, rely=0.85, anchor='center')
 
     # Function of the backend of the register page. It handles the users registration
     def register_backend(self):
@@ -140,8 +148,15 @@ class RegisterWindow:
         if not all(values.values()):
             messagebox.showinfo("", "All fields are required")
             return
-        # If all the fields are filled out, the code will connect with the SQL database.
-        # A message box would appear and add the users details to the database in the table created at the start
+
+        year_level = values["Year Level"]
+
+        # Combine year level with each subject code and capitalize the subject code
+        for i in range(1, 7):
+            values[f"Subject Code {i}"] = f"{year_level}{values[f'Subject Code {i}'].upper()}"
+
+        # If all the fields are filled out, the code will connect with the SQL database
+        # and add the users details to the database in the table created at the start
         try:
             with sqlite3.connect("users.db") as connection:
                 cursor = connection.cursor()
@@ -168,7 +183,7 @@ class RegisterWindow:
         except Exception as e:
             messagebox.showinfo("", f"An error occurred: {e}")
 
-    # If the user clicks the cancel button, the window will be destroyed and the signin page will be visible again
+    # If the user clicks the cancel button, the window will be destroyed and the sign-in page will be visible again
     def cancel_reg(self):
         self.register_window.destroy()
         self.main_window.deiconify()
