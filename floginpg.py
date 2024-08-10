@@ -145,7 +145,7 @@ class RegisterWindow:
         finally:
             connection.close()
 
-    # Function if the user clicks cancel, it redirects them back to the login page.
+    # Function if the user clicks cancel, it redirects them back to the login page
     def cancel_reg(self):
         self.register_window.destroy()
         self.main_window.deiconify()
