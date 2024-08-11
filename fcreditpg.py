@@ -24,6 +24,7 @@ def fetch_subject_details(student_id):
         subjects = user_data[1:]
         return year_level, subjects
 
+
 # Function to fetch all assessment/standard data from all_standards.py and all_standards SQL table
 def fetch_assessments(subject_code):
     with sqlite3.connect("users.db") as connection:
@@ -74,7 +75,8 @@ class CreditSummaryWindow:
         # For loop for all buttons. If clicked, the function command coded above runs.
         for button_text, frame in buttons:
             if frame:
-                button = ctk.CTkButton(nav_frame, text=button_text, width=150, command=lambda f=frame: self.show_frame(f))
+                button = ctk.CTkButton(nav_frame, text=button_text, width=150,
+                                       command=lambda f=frame: self.show_frame(f))
             elif button_text == "Credit Summary":
                 button = ctk.CTkButton(nav_frame, text=button_text, width=150, command=self.open_credit_summary)
             elif button_text == "Course Search":
@@ -82,7 +84,7 @@ class CreditSummaryWindow:
             elif button_text == "Help Center":
                 button = ctk.CTkButton(nav_frame, text=button_text, width=150, command=self.open_help_center)
             else:
-                button = ctk.CTkButton(nav_frame, text=button_text, width=150)  # Default case
+                button = ctk.CTkButton(nav_frame, text=button_text, width=150)
             button.pack(pady=10)
 
         # Fetch data from the database and see if the student ID matches for the window to open
@@ -139,7 +141,8 @@ class CreditSummaryWindow:
 
         # Table GUI. Instead of having a label for each header, used i to assign and index the headers in a loop
         # This simplfies the code so it is easier to understand
-        headers = ["Subject Code", "Assessment Description", "Assessment Type", "Credits Available", "Grade Achieved", "Credits Achieved"]
+        headers = ["Subject Code", "Assessment Description", "Assessment Type", "Credits Available", "Grade Achieved",
+                   "Credits Achieved"]
         for col, header in enumerate(headers):
             ctk.CTkLabel(self.table_frame, text=header, font=title_font).grid(row=0, column=col, padx=10, pady=10)
 
@@ -159,7 +162,9 @@ class CreditSummaryWindow:
                 # the function runs
                 self.subject_labels.append(subject_label)
                 self.assessment_widgets[subject_code] = []
-                subject_label.bind("<Button-1>", lambda e, sc=f"{year_level}{subject_code}", r=row: self.toggle_assessment_display(sc, r))
+                subject_label.bind("<Button-1>",
+                                   lambda e, sc=f"{year_level}{subject_code}", r=row: self.toggle_assessment_display(sc,
+                                                                                                                     r))
 
         # Add Credits button
         ctk.CTkButton(frame, text="Add Credits", command=self.add_credits).pack(pady=10)
@@ -177,30 +182,36 @@ class CreditSummaryWindow:
             subject_label.grid()
 
         if hasattr(self, 'last_opened') and self.last_opened == subject_code:
-            # If the same subject is clicked again, hide its assessments
+            # If the same subject is clicked again, it hides all other assessments
             self.last_opened = None
             return
 
         self.last_opened = subject_code
         # Used the same loop from creditpg.py v3, for the idea of the user manually inputted their grade
         assessments = fetch_assessments(subject_code)
+        self.assessment_widgets[subject_code] = []  # Clear existing widgets for this subject
+
         for a, assessment in enumerate(assessments):
             row_offset = row + a + 1
-            widgets = []
 
-            # For loop for the user to add their own grade to the table
+            # Gone back to the other code from v5
+            # Still does the same as previous version but less code and
+            # for loop w/ if statement so its easier to understand
             for col, value in enumerate(assessment):
-                ctk.CTkLabel(self.table_frame, text=value).grid(row=row_offset, column=col + 1, padx=10, pady=10)
-                widgets.append(ctk.CTkLabel(self.table_frame, text=value))
+                if col == 2:  # This is the "Grade Achieved" column
+                    grade_entry = ctk.CTkEntry(self.table_frame)
+                    grade_entry.grid(row=row_offset, column=col + 2, padx=10, pady=10)
+                    self.grade_entries[f"{subject_code}_{a}"] = grade_entry
+                else:
+                    label = ctk.CTkLabel(self.table_frame, text=value)
+                    label.grid(row=row_offset, column=col + 1, padx=10, pady=10)
 
-            grade_entry = ctk.CTkEntry(self.table_frame)
-            grade_entry.grid(row=row_offset, column=4, padx=10, pady=10)
-            self.grade_entries[f"{subject_code}_{a}"] = grade_entry
-            widgets.append(grade_entry)
-
-            self.assessment_widgets[subject_code].extend(widgets)
-
-        ctk.CTkButton(self.table_frame, text="Save Grades", command=self.save_grades).grid(row=row + len(assessments) + 1, columnspan=6, pady=10)
+            # Add the "Grade Achieved" entry widget and save button
+            save_button_row = row + len(assessments) + 1
+            ctk.CTkButton(self.table_frame, text="Save Grades", command=self.save_grades).grid(row=save_button_row,
+                                                                                               columnspan=6, pady=10)
+            # Store the widgets
+            self.assessment_widgets[subject_code].extend(self.table_frame.grid_slaves(row=row_offset))
 
     # Function to add the credits and save the grade in the table
     def save_grades(self):
@@ -212,14 +223,14 @@ class CreditSummaryWindow:
             # Determining credits achieved based on grade inputted by the user
             # Made code more concise then before. Only one elif statement for all other achieved grades
             # Fetch credits available
-            credits_available = [a[2] for a in fetch_assessments(subject_code)][index]
+            credits_available = [a[2] for a in fetch_assessments(subject_code)][index]  # Fetch credits available
             if grade == "NA":
                 credits_achieved = 0
             elif grade in ["A", "M", "E"]:
                 credits_achieved = credits_available
             else:
                 credits_achieved = 0
-            # Default to 0 if an invalid grade is entered
+                # Default to 0 if an invalid grade is entered
 
     # Function to add credits to the database
     def add_credits(self):
