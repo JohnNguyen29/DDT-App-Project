@@ -4,10 +4,10 @@ from tkinter import messagebox
 from PIL import Image, ImageTk
 import sqlite3
 import subprocess
+import re
 
 # Sets default GUI color as light mode regardless of the user's system light/dark mode
 customtkinter.set_appearance_mode("light")
-
 
 # Creates a table in the SQL database if there isn't already. Asks the user to input information to store in the
 # database.
@@ -30,7 +30,6 @@ def connect_db():
         ''')
         connection.commit()
 
-
 # Class for the login page. Used variable of LoginFront because the components under this can be seen by the user
 class LoginFront:
     # Function of the frontend of the login page. It has labels and buttons for the user to input their login details
@@ -46,9 +45,9 @@ class LoginFront:
 
         # Added a logo to the login page. Example on GC
         self.logo_image = Image.open("/users/nguyennguyen/desktop/NSLogo.png")
-        self.logo = ctk.CTkImage(self.logo_image)
+        self.logo = ctk.CTkImage(self.logo_image, size=(210, 206))
         self.logo_label = ctk.CTkLabel(self.root, image=self.logo, text="")
-        self.logo_label.pack(pady=100)
+        self.logo_label.pack(pady=10)
 
         # Width and height for the frame
         # Changed from place to pack to add padding around the frame
@@ -129,16 +128,16 @@ class RegisterWindow:
         # Give all the labels the same settings on the page.
         # So all the input fields are uniformly spaced out.
         # Added a line when the user inputs their password, a '*' is shown instead of the character for privacy
-        for i, label in enumerate(labels):
-            ctk.CTkLabel(self.form_frame, text=label, font=self.label_font).grid(row=i, column=0, pady=5, padx=10,
-                                                                                 sticky="w")
+        # Added a confirm password to the list of input fields without having it go to the database
+        for i, label in enumerate(labels + ["Confirm Password"]):
+            ctk.CTkLabel(self.form_frame, text=label, font=self.label_font).grid(row=i, column=0, pady=5, padx=10, sticky="w")
             self.entries[label] = ctk.CTkEntry(self.form_frame, show="*" if "Password" in label else None)
             self.entries[label].grid(row=i, column=1, pady=5, padx=10)
         # Submit and cancel buttons on the register page
         ctk.CTkButton(self.register_window, text="Submit", command=self.register_backend, height=40, width=150,
-                      font=self.button_font).place(relx=0.3, rely=0.85, anchor='center')
+                      font=self.button_font).place(relx=0.3, rely=0.9, anchor='center')
         ctk.CTkButton(self.register_window, text="Cancel", command=self.cancel_reg, height=40, width=150,
-                      font=self.button_font).place(relx=0.7, rely=0.85, anchor='center')
+                      font=self.button_font).place(relx=0.7, rely=0.9, anchor='center')
 
     # Function of the backend of the register page. It handles the users registration
     def register_backend(self):
@@ -147,6 +146,30 @@ class RegisterWindow:
         # will appear asking the user to fill everything out
         if not all(values.values()):
             messagebox.showinfo("", "All fields are required")
+            return
+
+        # If the user does not fill out every input on the page, an error message will appear
+        if not all(values.values()):
+            messagebox.showinfo("", "All fields are required")
+            return
+
+        password = values["Password"]
+        confirm_password = values["Confirm Password"]
+
+        # String boundary password validation.
+        # Used len() to check for no. of character in password and set to 8-20 long.
+        if len(password) < 8 or len(password) > 30:
+            messagebox.showinfo("", "Your password must be between 8 and 20 characters.")
+            return
+
+        # Checking if the password contains at least one uppercase letter and one number
+        if not re.search(r'[A-Z]', password) or not re.search(r'\d', password):
+            messagebox.showinfo("", "Your password must contain at least one uppercase letter and one number.")
+            return
+
+        # Check if passwords match
+        if password != confirm_password:
+            messagebox.showinfo("", "Your passwords do not match")
             return
 
         year_level = values["Year Level"]
@@ -193,3 +216,4 @@ if __name__ == "__main__":
     root = ctk.CTk()
     app = LoginFront(root)
     root.mainloop()
+
