@@ -1,194 +1,217 @@
 import customtkinter as ctk
 import sqlite3
+from tkinter import messagebox
+from PIL import ImageTk, Image
+import subprocess
 
+def fetch_subject_details(student_id):
+    with sqlite3.connect("users.db") as connection:
+        cursor = connection.cursor()
+        cursor.execute('''
+            SELECT year_level, subject_code1, subject_code2, subject_code3, 
+                   subject_code4, subject_code5, subject_code6 
+            FROM user_details WHERE student_id = ?
+        ''', (student_id,))
+        user_data = cursor.fetchone()
 
-# Database setup
-def setup_database():
-    conn = sqlite3.connect('ncea_credits.db')
-    c = conn.cursor()
+        if not user_data:
+            return None
 
-    # Create tables
-    c.execute('''
-        CREATE TABLE IF NOT EXISTS subjects (
-            subject_code TEXT PRIMARY KEY,
-            subject_name TEXT
-        )
-    ''')
-
-    c.execute('''
-        CREATE TABLE IF NOT EXISTS assessments (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            subject_code TEXT,
-            assessment_type TEXT,
-            credits_available INTEGER,
-            grade_achieved TEXT,
-            credits_achieved INTEGER,
-            FOREIGN KEY(subject_code) REFERENCES subjects(subject_code)
-        )
-    ''')
-
-    # Insert sample data using INSERT OR IGNORE
-    subjects = [
-        ("13MAT", "Mathematics"),
-        ("13DDT", "Programming"),
-        ("13DVV", "Spatial Design"),
-        ("13PHY", "Physics")
-    ]
-
-    assessments = [
-        ("13MAT", "Trigonometry", 4, "", 4),
-        ("13MAT", "Algebra", 5, "", 5),
-        ("13DDT", "Programming", 6, "", 6),
-        ("13DVV", "Spatial Design", 6, "", 6),
-        ("13PHY", "Modern Physics", 3, "", 3),
-        ("13PHY", "Electricity", 6, "", 6),
-        ("13PHY", "Waves", 4, "", 4)
-    ]
-
-    c.executemany('INSERT OR IGNORE INTO subjects (subject_code, subject_name) VALUES (?, ?)', subjects)
-    c.executemany('''
-        INSERT OR IGNORE INTO assessments (subject_code, assessment_type, credits_available, grade_achieved, credits_achieved) 
-        VALUES (?, ?, ?, ?, ?)
-    ''', assessments)
-
-    # Commit changes and close the connection
-    conn.commit()
-    conn.close()
-
-
-# Fetch data from the database
-def fetch_subjects():
-    conn = sqlite3.connect('ncea_credits.db')
-    c = conn.cursor()
-    c.execute('SELECT subject_code, subject_name FROM subjects')
-    subjects = c.fetchall()
-    conn.close()
-    return subjects
-
+        year_level = user_data[0]
+        subjects = user_data[1:]
+        return year_level, subjects
 
 def fetch_assessments(subject_code):
-    conn = sqlite3.connect('ncea_credits.db')
-    c = conn.cursor()
-    c.execute(
-        'SELECT assessment_type, credits_available, grade_achieved, credits_achieved FROM assessments WHERE subject_code = ?',
-        (subject_code,))
-    assessments = c.fetchall()
-    conn.close()
-    return assessments
+    with sqlite3.connect("users.db") as connection:
+        cursor = connection.cursor()
+        cursor.execute('''
+            SELECT description, assessment_type, credits
+            FROM all_standards
+            WHERE subject_code = ?
+        ''', (subject_code,))
+        assessments = cursor.fetchall()
+        return assessments
 
+class CreditSummaryWindow:
+    def __init__(self, student_id):
+        self.student_id = student_id
+        self.root = ctk.CTk()
+        self.root.title("NCEA Credit Summary")
+        self.root.geometry("1440x900")
 
-# Initialize the main window
-app = ctk.CTk()
-app.title("NCEA Credit Summary")
-app.geometry("800x600")
+        # Setting the appearance mode of CustomTkinter
+        ctk.set_appearance_mode("light")
+        ctk.set_default_color_theme("blue")
 
-# Setup the database and fetch subjects
-setup_database()
-subjects = fetch_subjects()
+        # Navigation frame
+        nav_frame = ctk.CTkFrame(self.root, width=200)
+        nav_frame.pack(side="left", fill="y")
 
-# Define the header frame
-header_frame = ctk.CTkFrame(app, width=780, height=100, corner_radius=10)
-header_frame.pack(pady=20)
-header_frame.pack_propagate(False)
+        self.overlay_image(nav_frame)
 
-# Add title
-title_label = ctk.CTkLabel(header_frame, text="NCEA CREDIT SUMMARY", font=("Arial", 24))
-title_label.pack()
+        # Main content frame
+        self.main_frame = ctk.CTkFrame(self.root)
+        self.main_frame.pack(side="right", fill="both", expand=True)
 
-# Define the left menu frame
-menu_frame = ctk.CTkFrame(app, width=200, height=400, corner_radius=10)
-menu_frame.pack(side="left", padx=20, pady=10)
-menu_frame.pack_propagate(False)
+        # Different pages as frames
+        self.credit_summary_frame = ctk.CTkFrame(self.main_frame)
 
-# Add menu items
-menu_items = ["Home", "Credit Summary", "Course Search", "Help Center"]
-for item in menu_items:
-    btn = ctk.CTkButton(menu_frame, text=item, width=180)
-    btn.pack(pady=10)
+        self.credit_summary_frame.grid(row=0, column=0, sticky="nsew")
 
-# Define the main content frame
-content_frame = ctk.CTkFrame(app, width=540, height=400, corner_radius=10)
-content_frame.pack(side="right", padx=20, pady=10)
-content_frame.pack_propagate(False)
+        # Navigation buttons
+        buttons = [
+            ("Home", None),
+            ("Credit Summary", self.credit_summary_frame),  # Button to open credit summary script
+            ("Course Search", None),  # Button to open course search script
+            ("Help Center", None)  # Button to open help center script
+        ]
 
-# Add sections
-sections = [("LEVEL 1 NUMERACY", "LEVEL 1 EXCELLENCE ENDORSEMENT"),
-            ("LEVEL 1 LITERACY", "LEVEL 2 EXCELLENCE ENDORSEMENT"),
-            ("UE LITERACY", "LEVEL 3 EXCELLENCE ENDORSEMENT")]
-
-for left, right in sections:
-    frame = ctk.CTkFrame(content_frame, width=520, height=50, corner_radius=10)
-    frame.pack(pady=10)
-    frame.pack_propagate(False)
-
-    left_label = ctk.CTkLabel(frame, text=left, font=("Arial", 14))
-    left_label.pack(side="left", padx=20)
-
-    right_label = ctk.CTkLabel(frame, text=right, font=("Arial", 14))
-    right_label.pack(side="right", padx=20)
-
-# Add the table
-table_frame = ctk.CTkFrame(content_frame, width=520, height=200, corner_radius=10)
-table_frame.pack(pady=20)
-table_frame.pack_propagate(False)
-
-# Table headers
-headers = ["Subject Code", "Assessment Type", "Credits Available", "Grade Achieved", "Credits Achieved"]
-for i, header in enumerate(headers):
-    lbl = ctk.CTkLabel(table_frame, text=header, font=("Arial", 12, "bold"))
-    lbl.grid(row=0, column=i, padx=10, pady=5)
-
-
-# Function to update assessments in the table based on selected subject
-def update_assessments(event):
-    selected_subject_code = subject_var.get().split(" - ")[0]
-    assessments = fetch_assessments(selected_subject_code)
-    for widget in assessment_widgets:
-        widget.destroy()
-    for row, data in enumerate(assessments, start=1):
-        for col, value in enumerate(data):
-            if col == 2:  # Grade Achieved column
-                entry = ctk.CTkEntry(table_frame)
-                entry.insert(0, value)  # Insert the current value from the database
-                entry.grid(row=row, column=col, padx=10, pady=5)
-                grade_entries.append(
-                    (entry, selected_subject_code, data[0]))  # Store entry widget, subject code, and assessment type
+        for button_text, frame in buttons:
+            if frame:
+                button = ctk.CTkButton(nav_frame, text=button_text, width=150, command=lambda f=frame: self.show_frame(f))
+            elif button_text == "Credit Summary":
+                button = ctk.CTkButton(nav_frame, text=button_text, width=150, command=self.open_credit_summary)
+            elif button_text == "Course Search":
+                button = ctk.CTkButton(nav_frame, text=button_text, width=150, command=self.open_course_search)
+            elif button_text == "Help Center":
+                button = ctk.CTkButton(nav_frame, text=button_text, width=150, command=self.open_help_center)
             else:
-                lbl = ctk.CTkLabel(table_frame, text=str(value), font=("Arial", 12))
-                lbl.grid(row=row, column=col, padx=10, pady=5)
-                assessment_widgets.append(lbl)
+                button = ctk.CTkButton(nav_frame, text=button_text, width=150)  # Default case
+            button.pack(pady=10)
 
+        result = fetch_subject_details(student_id)
+        if result:
+            year_level, subjects = result
+            self.create_gui(self.credit_summary_frame, year_level, subjects)
+        else:
+            messagebox.showinfo("", "Student ID not found.")
+            self.root.destroy()
 
-# Dropdown menu for subjects
-subject_var = ctk.StringVar()
-subject_options = [f"{code} - {name}" for code, name in subjects]
-subject_menu = ctk.CTkOptionMenu(content_frame, variable=subject_var, values=subject_options,
-                                 command=update_assessments)
-subject_menu.pack(pady=10)
+        self.root.mainloop()
 
-# Initialize assessment widgets list
-assessment_widgets = []
+    def overlay_image(self, nav_frame):
+        # Logo image
+        my_img = Image.open("/Users/nguyennguyen/Desktop/NSLogo.png")
+        resized = my_img.resize((200, 200), Image.LANCZOS)
+        new_pic = ImageTk.PhotoImage(resized)
+        label = ctk.CTkLabel(nav_frame, image=new_pic, text="")
+        label.image = new_pic
+        label.pack()
 
-# Add "Add Credits" button
-add_credits_button = ctk.CTkButton(content_frame, text="Add Credits", width=120)
-add_credits_button.pack(pady=10)
+    def open_credit_summary(self):
+        self.show_frame(self.credit_summary_frame)
 
+    def open_course_search(self):
+        subprocess.run(["python3", "course_search.py"])
 
-# Define a function to save entered grades back to the database
-def save_grades():
-    conn = sqlite3.connect('ncea_credits.db')
-    c = conn.cursor()
-    for entry, subject_code, assessment_type in grade_entries:
-        grade = entry.get()
-        c.execute('UPDATE assessments SET grade_achieved = ? WHERE subject_code = ? AND assessment_type = ?',
-                  (grade, subject_code, assessment_type))
-    conn.commit()
-    conn.close()
-    print("Grades saved successfully")
+    def open_help_center(self):
+        subprocess.run(["python3", "help_center.py"])
 
+    def show_frame(self, frame):
+        frame.tkraise()
 
-# Add a button to save the entered grades to the database
-save_grades_button = ctk.CTkButton(content_frame, text="Save Grades", command=save_grades)
-save_grades_button.pack(pady=10)
+    def create_gui(self, frame, year_level, subjects):
+        subject_details = {
+            "13MAT": "NCEA Level 3 Mathematics (Calculus)",
+            "13ENG": "NCEA Level 3 English",
+            "13PHY": "NCEA Level 3 Physics",
+            "13DVV": "NCEA Level 3 Design and Visual Communication",
+            "13DDT": "NCEA Level 3 Digital Technology",
+        }
 
-app.mainloop()
+        # Labels
+        title_font = ctk.CTkFont(size=20, weight="bold")
+        ctk.CTkLabel(frame, text="NCEA Credit Summary", font=title_font).pack(pady=20)
+
+        self.table_frame = ctk.CTkFrame(frame)
+        self.table_frame.pack(pady=20, padx=20, fill="both", expand=True)
+
+        headers = ["Subject Code", "Assessment Description", "Assessment Type", "Credits Available", "Grade Achieved"]
+        for col, header in enumerate(headers):
+            ctk.CTkLabel(self.table_frame, text=header, font=title_font).grid(row=0, column=col, padx=10, pady=10)
+
+        self.grade_entries = {}  # Dictionary to store grade entries
+        self.assessment_widgets = {}  # Dictionary to store assessment widgets
+        self.subject_labels = []  # List to store subject labels
+
+        for row, subject_code in enumerate(subjects, start=1):
+            if subject_code:
+                full_subject = f"{year_level}{subject_code} - {subject_details.get(f'{year_level}{subject_code}', 'Unknown Subject')}"
+                subject_label = ctk.CTkLabel(self.table_frame, text=full_subject)
+                subject_label.grid(row=row, column=0, padx=10, pady=10)
+
+                self.subject_labels.append(subject_label)
+                self.assessment_widgets[subject_code] = []
+                subject_label.bind("<Button-1>", lambda e, sc=f"{year_level}{subject_code}", r=row: self.toggle_assessment_display(sc, r))
+
+        # Add Credits button
+        ctk.CTkButton(frame, text="Add Credits", command=self.add_credits).pack(pady=10)
+
+    def toggle_assessment_display(self, subject_code, row):
+        # Hide all widgets first
+        for widget in self.table_frame.grid_slaves():
+            if int(widget.grid_info()["row"]) > 0:
+                widget.grid_forget()
+
+        for subject_label in self.subject_labels:
+            subject_label.grid()
+
+        if hasattr(self, 'last_opened') and self.last_opened == subject_code:
+            # If the same subject is clicked again, hide its assessments
+            self.last_opened = None
+            return
+
+        self.last_opened = subject_code
+
+        assessments = fetch_assessments(subject_code)
+        for a, assessment in enumerate(assessments):
+            row_offset = row + a + 1
+            widgets = []
+
+            for col, value in enumerate(assessment):
+                label = ctk.CTkLabel(self.table_frame, text=value)
+                label.grid(row=row_offset, column=col + 1, padx=10, pady=10)
+                widgets.append(label)
+
+            grade_entry = ctk.CTkEntry(self.table_frame)
+            grade_entry.grid(row=row_offset, column=4, padx=10, pady=10)
+            self.grade_entries[f"{subject_code}_{a}"] = grade_entry
+            widgets.append(grade_entry)
+
+            # Optionally add a credits achieved entry (if needed)
+            credits_label = ctk.CTkLabel(self.table_frame, text="N/A")  # Placeholder for credits achieved
+            credits_label.grid(row=row_offset, column=5, padx=10, pady=10)
+            widgets.append(credits_label)
+
+            self.assessment_widgets[subject_code].extend(widgets)
+
+        # Add the save grades button
+        ctk.CTkButton(self.table_frame, text="Save Grades", command=self.save_grades).grid(
+            row=row + len(assessments) + 1, columnspan=6, pady=10)
+
+    def save_grades(self):
+        for key, entry in self.grade_entries.items():
+            subject_code, index = key.split('_')
+            grade = entry.get().strip().upper()
+            index = int(index)
+
+            # Determine credits achieved based on grade
+            credits_available = [a[2] for a in fetch_assessments(subject_code)][index]  # Fetch credits available
+            if grade == "NA":
+                credits_achieved = 0
+            elif grade in ["A", "M", "E"]:
+                credits_achieved = credits_available
+            else:
+                credits_achieved = 0  # Default to 0 if an invalid grade is entered
+
+            # Update the corresponding assessment data with the entered grade and credits achieved
+            # (You might need to implement this part depending on your application's requirements)
+
+    def add_credits(self):
+        # Logic to add credits
+        pass
+
+if __name__ == "__main__":
+    # Example student ID to fetch details
+    student_id = "22656"
+    CreditSummaryWindow(student_id)
