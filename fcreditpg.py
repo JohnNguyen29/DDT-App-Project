@@ -30,21 +30,33 @@ table_frame.pack_propagate(False)
 # All subject standards with assessment type, credits avaliable
 # and achieved and grade achieved
 subject_standards = [
-    ("13MAT - Trigonometry", "Internal", 4, "A", 4),
-    ("13MAT - Algebra", "External", 5, "E", 5),
-    ("13DDT - Programming", "Internal", 6, "E", 6),
-    ("13DVV - Spatial Design", "Internal", 6, "M", 6),
-    ("13PHY - Modern Physics", "Internal", 3, "A", 3),
-    ("13PHY - Electricity", "External", 6, "M", 6),
-    ("13PHY - Waves", "External", 4, "E", 4),
+    ("13MAT - Trigonometry", "Internal", 4, "", 4),
+    ("13MAT - Algebra", "External", 5, "", 5),
+    ("13DDT - Programming", "Internal", 6, "", 6),
+    ("13DVV - Spatial Design", "Internal", 6, "", 6),
+    ("13PHY - Modern Physics", "Internal", 3, "", 3),
+    ("13PHY - Electricity", "External", 6, "", 6),
+    ("13PHY - Waves", "External", 4, "", 4),
 ]
 
-# Table GUI. Instead of having a label for each header, used i to assign and index the headers.
+# Table GUI. Instead of having a label for each header, used i to assign and index the headers in a loop
 # This simplfies the code so it is easier to understand
 headers = ["Subject Code", "Assessment Type", "Credits Available", "Grade Achieved", "Credits Achieved"]
 for i, header in enumerate(headers):
     label = ctk.CTkLabel(table_frame, text=header)
     label.grid(row=0, column=i, padx=10, pady=5)
+
+# Grade Achieved column is now a input box for users to add their grade
+grade_entries = []
+for row, data in enumerate(subject_standards, start=1):
+    for col, value in enumerate(data):
+        if col == 3:
+            entry = ctk.CTkEntry(table_frame)
+            entry.grid(row=row, column=col, padx=10, pady=5)
+            grade_entries.append(entry)
+        else:
+            label = ctk.CTkLabel(table_frame, text=str(value))
+            label.grid(row=row, column=col, padx=10, pady=5)
 
 # Same idea for the data as the headers, used emuerate() for subject standards through the list above.
 for row, data in enumerate(subject_standards, start=1):
