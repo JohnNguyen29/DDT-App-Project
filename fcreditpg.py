@@ -173,7 +173,7 @@ class CreditSummaryWindow:
         self.table_frame = ctk.CTkFrame(frame)
         self.table_frame.pack(pady=5, padx=5, fill="both", expand=True)
 
-        ctk.CTkButton(frame, text="Show Pie Chart", command=self.show_pie_chart).pack(pady=10)
+        ctk.CTkButton(frame, text="Show Pie Chart", command=self.update_pie_chart).pack(pady=10)
 
         # Table GUI. Instead of having a label for each header, used i to assign and index the headers in a loop
         # This simplfies the code so it is easier to understand
@@ -199,8 +199,8 @@ class CreditSummaryWindow:
                 self.subject_labels.append(subject_label)
                 self.assessment_widgets[subject_code] = []
                 subject_label.bind("<Button-1>",
-                                   lambda e, sc=f"{year_level}{subject_code}", r=row: self.toggle_assessment_display(sc,
-                                                                                                                     r))
+                                   lambda e, sc=f"{year_level}{subject_code}", r=row: self.toggle_assessment_display(sc,r))
+
     # Function to show the assessment data
     # This is for when the subject is clicked, the assessments of the subject will show in the table
     # All other subjects will hide
@@ -247,6 +247,9 @@ class CreditSummaryWindow:
             # Store the widgets
             self.assessment_widgets[subject_code].extend(self.table_frame.grid_slaves(row=row_offset))
 
+        for key, (grade_label, row, column) in self.grade_labels.items():
+            grade_label.grid(row=row, column=column, padx=5, pady=5)
+
     # Function to update the pie chart when the user enters a grade
     def update_pie_chart(self):
         # Clear the previous chart
@@ -268,7 +271,7 @@ class CreditSummaryWindow:
         credits = [row[1] for row in data]
 
         # Create the pie chart
-        fig, ax = plt.subplots()
+        fig, ax = plt.subplots(figsize=(3, 3))
         ax.pie(credits, labels=grades, autopct='%1.1f%%', startangle=90)
 
         # Embed the pie chart into the CustomTkinter interface
@@ -281,28 +284,57 @@ class CreditSummaryWindow:
     # when the user clicks save, the 'grades' table will be populated with the users input
     def save_grades(self):
         student_id = self.student_id
+        valid_grades = {
+            "NA": "NOT ACHIEVED",
+            "A": "ACHIEVED",
+            "M": "MERIT",
+            "E": "EXCELLENCE"
+        }
 
         for key, entry in self.grade_entries.items():
-            grade = entry.get()
+            grade = entry.get().strip().upper()
+            if grade not in valid_grades:
+                messagebox.showerror("Invalid Grade", "Please enter a valid grade: NA, A, M, or E.")
+                return
+
             if grade:
                 subject_code, assessment_index = key.rsplit("_", 1)
                 assessments = fetch_assessments(subject_code)
 
-                # Indexing the assessments and credits
+                # Check if a grade has already been entered for this assessment
                 assessment = assessments[int(assessment_index)]
                 assessment_description = assessment[0]
-                credits = assessment[2]
 
                 with sqlite3.connect("users.db") as connection:
                     cursor = connection.cursor()
                     cursor.execute('''
-                        INSERT INTO grades (student_id, subject_code, assessment_description, grade, credits)
-                        VALUES (?, ?, ?, ?, ?)
-                    ''', (student_id, subject_code, assessment_description, grade, credits))
-                    connection.commit()
+                        SELECT grade FROM grades 
+                        WHERE student_id = ? AND subject_code = ? AND assessment_description = ?
+                    ''', (student_id, subject_code, assessment_description))
+                    existing_grade = cursor.fetchone()
 
-        messagebox.showinfo("", "Grades saved successfully!")
+                    if existing_grade:
+                        messagebox.showinfo("Grade Already Entered",
+                                            f"Grade '{valid_grades[existing_grade[0]]}' has already been entered for this assessment.")
+                    else:
+                        # Save the new grade if not already entered
+                        cursor.execute('''
+                            INSERT INTO grades (student_id, subject_code, assessment_description, grade, credits)
+                            VALUES (?, ?, ?, ?, ?)
+                        ''', (student_id, subject_code, assessment_description, grade, assessment[2]))
+                        connection.commit()
+
+                        # Replace the entry field with a label showing the full grade description
+                        row = entry.grid_info()["row"]
+                        entry.grid_forget()
+
+                        grade_label = ctk.CTkLabel(self.table_frame, text=valid_grades[grade])
+                        grade_label.grid(row=row, column=4, padx=5, pady=5)
+                        self.grade_labels[key] = (grade_label, entry.grid_info()["row"], entry.grid_info()["column"])
+                        del self.grade_entries[key]
+
         self.update_pie_chart()
+        messagebox.showinfo("", "Grades saved successfully!")
 
     # Function to show the pie chart in the frame above the table frame
     def show_pie_chart(self):
