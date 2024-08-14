@@ -76,6 +76,7 @@ class CreditSummaryWindow:
         self.root = ctk.CTk()
         self.root.title("NCEA Credit Summary")
         self.root.geometry("1440x900")
+        self.saved_grades = {}  # Storing saved grades
 
         create_grades_table()
 
@@ -99,7 +100,7 @@ class CreditSummaryWindow:
 
         # Navigation buttons
         buttons = [
-            ("Home", None),
+            ("Home", self.open_home),
             ("Credit Summary", self.credit_summary_frame),  # Button to open credit summary script
             ("Course Search", None),  # Button to open course search script
         ]
@@ -131,11 +132,15 @@ class CreditSummaryWindow:
     # Function of the logo image on the navigation bar
     def overlay_image(self, nav_frame):
         my_img = Image.open("/Users/nguyennguyen/Desktop/NSLogo.png")
-        resized = my_img.resize((150, 150), Image.LANCZOS)
+        resized = my_img.resize((200, 200), Image.LANCZOS)
         new_pic = ImageTk.PhotoImage(resized)
         label = ctk.CTkLabel(nav_frame, image=new_pic, text="")
         label.image = new_pic
         label.pack()
+
+    # Function when button is clicked, the course search script will run
+    def open_home(self):
+        subprocess.run(["python3", "landingpagetest.py"])
 
     # Function of opening the credit summary page (already on it)
     def open_credit_summary(self):
@@ -144,10 +149,6 @@ class CreditSummaryWindow:
     # Function when button is clicked, the course search script will run
     def open_course_search(self):
         subprocess.run(["python3", "course_search.py"])
-
-    # Function when button is clicked, the help center script will run
-    def open_help_center(self):
-        subprocess.run(["python3", "help_center.py"])
 
     # Function to show frame
     def show_frame(self, frame):
@@ -175,11 +176,18 @@ class CreditSummaryWindow:
 
         ctk.CTkButton(frame, text="Show Pie Chart", command=self.update_pie_chart).pack(pady=10)
 
+        # Set weights for each column to distribute space
+        self.table_frame.columnconfigure(0, weight=1)
+        self.table_frame.columnconfigure(1, weight=3)
+        self.table_frame.columnconfigure(2, weight=2)
+        self.table_frame.columnconfigure(3, weight=1)
+        self.table_frame.columnconfigure(4, weight=2)
+
         # Table GUI. Instead of having a label for each header, used i to assign and index the headers in a loop
         # This simplfies the code so it is easier to understand
         headers = ["Subject Code", "Assessment Description", "Assessment Type", "Credits Available", "Grade Achieved"]
         for col, header in enumerate(headers):
-            ctk.CTkLabel(self.table_frame, text=header, font=title_font).grid(row=0, column=col, padx=10, pady=10)
+            ctk.CTkLabel(self.table_frame, text=header, font=title_font, width=10).grid(row=0, column=col, padx=10, pady=10)
 
         # Dictionaries and lists to store the users grade input, the assessment widgets (entry label), and subject labels
         self.grade_entries = {}
@@ -226,19 +234,24 @@ class CreditSummaryWindow:
             row_offset = row + a + 1
 
             # Labels for all columns of the subject table
-            description_label = ctk.CTkLabel(self.table_frame, text=assessment[0])
+            description_label = ctk.CTkLabel(self.table_frame, text=assessment[0], anchor="w", wraplength=300,
+                                             width=300)
             description_label.grid(row=row_offset, column=1, padx=5, pady=5)
 
-            type_label = ctk.CTkLabel(self.table_frame, text=assessment[1])
+            type_label = ctk.CTkLabel(self.table_frame, text=assessment[1], width=50)
             type_label.grid(row=row_offset, column=2, padx=5, pady=5)
 
-            credits_label = ctk.CTkLabel(self.table_frame, text=assessment[2])
+            credits_label = ctk.CTkLabel(self.table_frame, text=assessment[2], width=50)
             credits_label.grid(row=row_offset, column=3, padx=5, pady=5)
 
-            # "Grade Achieved" entry should be in the last column (column 4)
-            grade_entry = ctk.CTkEntry(self.table_frame)
-            grade_entry.grid(row=row_offset, column=4, padx=5, pady=5)
-            self.grade_entries[f"{subject_code}_{a}"] = grade_entry
+            key = f"{subject_code}_{a}"
+            if key in self.saved_grades:
+                grade_label = ctk.CTkLabel(self.table_frame, text=self.saved_grades[key])
+                grade_label.grid(row=row_offset, column=4, padx=5, pady=5)
+            else:
+                grade_entry = ctk.CTkEntry(self.table_frame, width=100)
+                grade_entry.grid(row=row_offset, column=4, padx=5, pady=5)
+                self.grade_entries[key] = grade_entry
 
             # Add the "Grade Achieved" entry widget and save button
             save_button_row = row + len(assessments) + 1
@@ -271,7 +284,7 @@ class CreditSummaryWindow:
         credits = [row[1] for row in data]
 
         # Create the pie chart
-        fig, ax = plt.subplots(figsize=(3, 3))
+        fig, ax = plt.subplots(figsize=(2, 2))
         ax.pie(credits, labels=grades, autopct='%1.1f%%', startangle=90)
 
         # Embed the pie chart into the CustomTkinter interface
@@ -291,7 +304,7 @@ class CreditSummaryWindow:
             "E": "EXCELLENCE"
         }
 
-        for key, entry in self.grade_entries.items():
+        for key, entry in list(self.grade_entries.items()):
             grade = entry.get().strip().upper()
             if grade not in valid_grades:
                 messagebox.showerror("Invalid Grade", "Please enter a valid grade: NA, A, M, or E.")
@@ -324,6 +337,8 @@ class CreditSummaryWindow:
                         ''', (student_id, subject_code, assessment_description, grade, assessment[2]))
                         connection.commit()
 
+                        self.saved_grades[key] = grade
+
                         # Replace the entry field with a label showing the full grade description
                         row = entry.grid_info()["row"]
                         entry.grid_forget()
@@ -337,6 +352,7 @@ class CreditSummaryWindow:
         messagebox.showinfo("", "Grades saved successfully!")
 
     # Function to show the pie chart in the frame above the table frame
+    # Fetches the students grades through their student ID and the grades table
     def show_pie_chart(self):
         data = fetch_grades_data(self.student_id)
         grades = [row[0] for row in data]
