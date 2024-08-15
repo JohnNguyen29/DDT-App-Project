@@ -100,12 +100,11 @@ class CreditSummaryWindow:
 
         # Navigation buttons
         buttons = [
-            ("Home", self.open_home),
-            ("Credit Summary", self.credit_summary_frame),  # Button to open credit summary script
-            ("Course Search", None),  # Button to open course search script
+            ("Home", None),  # Set to None since it will use the `open_home` method
+            ("Credit Summary", self.credit_summary_frame),
+            ("Course Search", None),  # Same as Home
         ]
 
-        # For loop for all buttons. If clicked, the function command coded above runs.
         for button_text, frame in buttons:
             if frame:
                 button = ctk.CTkButton(nav_frame, text=button_text, width=150,
@@ -114,6 +113,8 @@ class CreditSummaryWindow:
                 button = ctk.CTkButton(nav_frame, text=button_text, width=150, command=self.open_credit_summary)
             elif button_text == "Course Search":
                 button = ctk.CTkButton(nav_frame, text=button_text, width=150, command=self.open_course_search)
+            elif button_text == "Home":
+                button = ctk.CTkButton(nav_frame, text=button_text, width=150, command=self.open_home)
             else:
                 button = ctk.CTkButton(nav_frame, text=button_text, width=150)
             button.pack(pady=10)
@@ -138,17 +139,15 @@ class CreditSummaryWindow:
         label.image = new_pic
         label.pack()
 
-    # Function when button is clicked, the course search script will run
+    # Function when button is clicked, the landing page script will run
     def open_home(self):
-        subprocess.run(["python3", "landingpagetest.py"])
-
-    # Function of opening the credit summary page (already on it)
-    def open_credit_summary(self):
-        self.show_frame(self.credit_summary_frame)
+        self.root.destroy()  # Close the current window
+        subprocess.run(["python3", "flandingpg.py"])  # Replace 'landingpagetest.py' with 'flandingpg.py'
 
     # Function when button is clicked, the course search script will run
     def open_course_search(self):
-        subprocess.run(["python3", "course_search.py"])
+        self.root.destroy()  # Close the current window
+        subprocess.run(["python3", "fcoursesearchpg.py"])
 
     # Function to show frame
     def show_frame(self, frame):
@@ -161,11 +160,16 @@ class CreditSummaryWindow:
             "13ENG": "NCEA Level 3 English",
             "13PHY": "NCEA Level 3 Physics",
             "13DDT": "NCEA Level 3 Digital Technologies",
-            "13DVV": "NCEA Level 3 Design and Visual Communication"
+            "13DVV": "NCEA Level 3 Design and Visual Communication",
+            "13NA": "Extra Subject"
         }
 
         title_font = ctk.CTkFont(size=20, weight="bold")
         ctk.CTkLabel(frame, text="NCEA Credit Summary", font=title_font).pack(pady=20)
+
+        ctk.CTkLabel(frame,
+                     text="IMPORTANT: Please only enter your grades when it is FINAL. You cannot change grades after saving.",
+                     font=ctk.CTkFont(size=12, weight="bold")).pack(pady=10)
 
         # Creating another frame above the table frame for the pie chart and progress bars to place
         self.chart_frame = ctk.CTkFrame(frame)
@@ -264,10 +268,15 @@ class CreditSummaryWindow:
             grade_label.grid(row=row, column=column, padx=5, pady=5)
 
     # Function to update the pie chart when the user enters a grade
+    # Modified function to update the pie chart and progress bars
     def update_pie_chart(self):
-        # Clear the previous chart
+        # Clear the previous chart and progress bars
         for widget in self.chart_frame.winfo_children():
             widget.destroy()
+
+        self.chart_frame.grid_columnconfigure(0, weight=1, uniform="equal")
+        self.chart_frame.grid_columnconfigure(1, weight=1, uniform="equal")
+        self.chart_frame.grid_rowconfigure(0, weight=1)
 
         # Fetch data from the 'grades' table in users.db
         with sqlite3.connect("users.db") as connection:
@@ -280,17 +289,44 @@ class CreditSummaryWindow:
             """, (self.student_id,))
             data = cursor.fetchall()
 
-        grades = [row[0] for row in data]
-        credits = [row[1] for row in data]
+        grades = {row[0]: row[1] for row in data}
+
+        achieved_credits = grades.get("A", 0)
+        merit_credits = grades.get("M", 0)
+        excellence_credits = grades.get("E", 0)
+
+        # Calculate the cumulative credits for each category
+        merit_total = merit_credits + excellence_credits
+        achieved_total = achieved_credits + merit_credits + excellence_credits
+        total_credits = achieved_total
 
         # Create the pie chart
-        fig, ax = plt.subplots(figsize=(2, 2))
-        ax.pie(credits, labels=grades, autopct='%1.1f%%', startangle=90)
+        progress_bar_frame = ctk.CTkFrame(self.chart_frame)
+        progress_bar_frame.grid(row=0, column=0, padx=10, pady=10, sticky="nsw")
 
-        # Embed the pie chart into the CustomTkinter interface
+        self.create_progress_bar("Achieved Endorsement", achieved_total, 50, parent=progress_bar_frame)
+        self.create_progress_bar("Merit Endorsement", merit_total, 50, parent=progress_bar_frame)
+        self.create_progress_bar("Excellence Endorsement", excellence_credits, 50, parent=progress_bar_frame)
+        self.create_progress_bar("NCEA Level Certificate", total_credits, 80, parent=progress_bar_frame)
+
+        # Create the pie chart on the right
+        fig, ax = plt.subplots(figsize=(2, 2))
+        ax.pie([achieved_credits, merit_credits, excellence_credits],
+               labels=["Achieved", "Merit", "Excellence"], autopct='%1.1f%%', startangle=90)
+
         chart = FigureCanvasTkAgg(fig, master=self.chart_frame)
-        chart.get_tk_widget().pack()
+        chart.get_tk_widget().grid(row=0, column=1, padx=10, pady=10, sticky="nse")
+
         chart.draw()
+
+    # Modified function to create and update a progress bar with a parent frame parameter
+    def create_progress_bar(self, label_text, value, max_value, parent, total=False):
+        label_font = ctk.CTkFont(size=14, weight="bold") if total else None
+        ctk.CTkLabel(parent, text=f"{label_text} ({value}/{max_value})", font=label_font).pack(pady=5)
+
+        progress_bar = ctk.CTkProgressBar(parent, height=30 if total else None)
+        progress_bar.set(value / max_value)  # Set the progress (value/max_value)
+        progress_bar.pack(pady=5, fill="x")
 
     # Function to save the grades the user inputs
     # NA = 0 credits, all other grades = corrosponding credits
