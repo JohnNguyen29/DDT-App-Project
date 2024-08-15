@@ -80,7 +80,7 @@ class UniCourseSearchPage:
         university_menu.grid(row=0, column=1, padx=10, pady=10, sticky="w")
 
         # Subject filter
-        subject_label = ctk.CTkLabel(filter_frame, text="Select Subject:", font=("Arial", 14))
+        subject_label = ctk.CTkLabel(filter_frame, text="Select Subject/Faculty:", font=("Arial", 14))
         subject_label.grid(row=1, column=0, padx=10, pady=10, sticky="w")
 
         # Lists of uni faculties/subjects in an CTkOptionMenu
@@ -97,6 +97,34 @@ class UniCourseSearchPage:
         self.results_frame = ctk.CTkFrame(self.main_frame)
         self.results_frame.pack(pady=20, fill="both", expand=True)
 
+        # Display any bookmarked courses
+        self.display_bookmarked_courses()
+
+    # Function to display bookmarked courses
+    def display_bookmarked_courses(self):
+        conn = sqlite3.connect("users.db")
+        cursor = conn.cursor()
+
+        cursor.execute("SELECT course, university, subject FROM bookmarks")
+        bookmarks = cursor.fetchall()
+
+        conn.close()
+
+        if bookmarks:
+            bookmark_label = ctk.CTkLabel(self.results_frame, text="Bookmarked Courses", font=("Arial", 16, "bold"))
+            bookmark_label.pack(pady=10)
+
+            for course, university, subject in bookmarks:
+                bookmark_frame = ctk.CTkFrame(self.results_frame)
+                bookmark_frame.pack(fill="x", pady=5)
+
+                course_label = ctk.CTkLabel(bookmark_frame, text=course, font=("Arial", 14))
+                course_label.pack(side="left")
+
+                remove_button = ctk.CTkButton(bookmark_frame, text="Remove", width=100,
+                                              command=lambda c=course: self.remove_bookmark(c))
+                remove_button.pack(side="right")
+
     # Function to search courses and display dropdowns for each
     def search_courses(self):
         university = self.university_var.get()
@@ -105,6 +133,9 @@ class UniCourseSearchPage:
         # Clear previous results
         for widget in self.results_frame.winfo_children():
             widget.destroy()
+
+        # Display any bookmarked courses
+        self.display_bookmarked_courses()
 
         # Connect to the database
         conn = sqlite3.connect("users.db")
@@ -124,7 +155,12 @@ class UniCourseSearchPage:
 
                 # Add the course name as a label
                 course_label = ctk.CTkLabel(course_frame, text=course, font=("Arial", 14))
-                course_label.pack(anchor="w")
+                course_label.pack(anchor="w", side="left")
+
+                # Add a bookmark button
+                bookmark_button = ctk.CTkButton(course_frame, text="Bookmark", width=100,
+                                                command=lambda c=course, u=university, s=subject: self.add_bookmark(c, u, s))
+                bookmark_button.pack(anchor="e", side="right")
 
                 # Add a dropdown to show course details
                 details_frame = ctk.CTkFrame(course_frame)
@@ -134,11 +170,49 @@ class UniCourseSearchPage:
                 description_label = ctk.CTkLabel(details_frame, text=f"Description: {description}", font=("Arial", 12))
                 description_label.pack(anchor="w")
 
-                rank_score_label = ctk.CTkLabel(details_frame, text=f"Entry Requirement: Rank Score {rank_score}", font=("Arial", 12))
+                rank_score_label = ctk.CTkLabel(details_frame, text=f"Entry Requirements: Rank Score {rank_score}", font=("Arial", 12))
                 rank_score_label.pack(anchor="w")
         else:
             no_results_label = ctk.CTkLabel(self.results_frame, text="No courses found.", font=("Arial", 14))
             no_results_label.pack(pady=20)
 
+    # Function to add a bookmark
+    def add_bookmark(self, course, university, subject):
+        conn = sqlite3.connect("users.db")
+        cursor = conn.cursor()
+
+        cursor.execute("INSERT INTO bookmarks (course, university, subject) VALUES (?, ?, ?)", (course, university, subject))
+        conn.commit()
+        conn.close()
+
+        messagebox.showinfo("Bookmark Added", f"Course '{course}' has been bookmarked.")
+        self.search_courses()  # Refresh the course list to show the updated bookmarks
+
+    # Function to remove a bookmark
+    def remove_bookmark(self, course):
+        conn = sqlite3.connect("users.db")
+        cursor = conn.cursor()
+
+        cursor.execute("DELETE FROM bookmarks WHERE course=?", (course,))
+        conn.commit()
+        conn.close()
+
+        messagebox.showinfo("Bookmark Removed", f"Course '{course}' has been removed from bookmarks.")
+        self.search_courses()  # Refresh the course list to show the updated bookmarks
+
 if __name__ == "__main__":
+    # Ensure the bookmarks table exists in the database
+    conn = sqlite3.connect("users.db")
+    cursor = conn.cursor()
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS bookmarks (
+            course TEXT,
+            university TEXT,
+            subject TEXT
+        )
+    """)
+    conn.commit()
+    conn.close()
+
     UniCourseSearchPage()
+
