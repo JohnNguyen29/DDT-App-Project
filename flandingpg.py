@@ -7,6 +7,7 @@ import subprocess
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 
+# Using a class for the home/landing page because it is its own window
 class HomePage:
     def __init__(self):
         self.root = ctk.CTk()
@@ -48,7 +49,7 @@ class HomePage:
 
         # Bottom frame
         self.bottom_frame = ctk.CTkFrame(self.main_frame, height=200)
-        self.bottom_frame.pack(side="bottom", fill="x")
+        self.bottom_frame.pack(fill="x")
 
         # Create the GUI elements in the frames
         self.create_gui(self.welcome_frame, self.top_frame, self.bottom_frame)
@@ -73,10 +74,54 @@ class HomePage:
         self.root.destroy()
         subprocess.run(["python3", "fcreditpg.py"])
 
-    # Function to create the GUI of the page.
+    # Function to create the GUI
     def create_gui(self, welcome_frame, top_frame, bottom_frame):
+        # Welcome message in the Welcome frame
         title_font = ctk.CTkFont(size=20, weight="bold")
         ctk.CTkLabel(welcome_frame, text="Welcome! This is your NCEA summary...", font=title_font).pack(pady=20)
 
+        # Bottom frame content
+        self.display_bookmarked_courses(bottom_frame)
 
-HomePage()
+    # Function to display bookmarked courses in the bottom frame
+    def display_bookmarked_courses(self, frame):
+        conn = sqlite3.connect("users.db")
+        cursor = conn.cursor()
+
+        cursor.execute("SELECT course, university, subject FROM bookmarks")
+        bookmarks = cursor.fetchall()
+
+        conn.close()
+
+        if bookmarks:
+            bookmark_label = ctk.CTkLabel(frame, text="Bookmarked Courses", font=("Arial", 16, "bold"))
+            bookmark_label.pack(pady=10)
+
+            for course, university, subject in bookmarks:
+                bookmark_frame = ctk.CTkFrame(frame)
+                bookmark_frame.pack(fill="x", pady=5)
+
+                course_label = ctk.CTkLabel(bookmark_frame, text=course, font=("Arial", 14))
+                course_label.pack(side="left")
+
+                remove_button = ctk.CTkButton(bookmark_frame, text="Remove", width=100,
+                                              command=lambda c=course: self.remove_bookmark(c))
+                remove_button.pack(side="right")
+        else:
+            no_bookmarks_label = ctk.CTkLabel(frame, text="No bookmarked courses.", font=("Arial", 14))
+            no_bookmarks_label.pack(pady=20)
+
+    # Function to remove a bookmark
+    def remove_bookmark(self, course):
+        conn = sqlite3.connect("users.db")
+        cursor = conn.cursor()
+
+        cursor.execute("DELETE FROM bookmarks WHERE course=?", (course,))
+        conn.commit()
+        conn.close()
+
+        messagebox.showinfo("Bookmark Removed", f"Course '{course}' has been removed from bookmarks.")
+        self.display_bookmarked_courses(self.bottom_frame)  # Refresh the bookmark list
+
+if __name__ == "__main__":
+    HomePage()
