@@ -82,7 +82,7 @@ class UniCourseSearchPage:
         subject_label.grid(row=1, column=0, padx=10, pady=10, sticky="w")
 
         self.subject_var = ctk.StringVar()
-        subject_options = ["Science", "Design", "Engineering", "Law"]
+        subject_options = ["Arts", "Business, Commerce, and Finance", "CADI", "Engineering", "Health, Medicine, and Biomedical Science", "Law", "Technology, Maths, and Science"]
         subject_menu = ctk.CTkOptionMenu(filter_frame, variable=self.subject_var, values=subject_options)
         subject_menu.grid(row=1, column=1, padx=10, pady=10, sticky="w")
 
@@ -102,32 +102,28 @@ class UniCourseSearchPage:
         university = self.university_var.get()
         subject = self.subject_var.get()
 
-        # Simulated search results
-        courses = {
-            "University of Auckland": {
-                "Science": ["Computer Science", "Biomedical Science", "Physics"],
-                "Engineering": ["Intro to Programming", "Data Structures", "Algorithms"]
-            },
-            "Auckland University of Technology": {
-                "Computer Science": ["Intro to Programming", "Data Structures", "Algorithms"],
-                "Design": ["Classical Mechanics", "Quantum Physics", "Thermodynamics"]
-            },
-            # Add more universities and subjects as needed...
-        }
-
         # Clear previous results
         for widget in self.results_frame.winfo_children():
             widget.destroy()
 
+        # Connect to the database
+        conn = sqlite3.connect("users.db")
+        cursor = conn.cursor()
+
+        # Query the database for matching courses
+        cursor.execute("SELECT course FROM allcourses WHERE university=? AND subject=?", (university, subject))
+        courses = cursor.fetchall()
+
+        conn.close()
+
         # Display search results
-        if university in courses and subject in courses[university]:
-            for course in courses[university][subject]:
-                course_label = ctk.CTkLabel(self.results_frame, text=course, font=("Arial", 14))
+        if courses:
+            for course in courses:
+                course_label = ctk.CTkLabel(self.results_frame, text=course[0], font=("Arial", 14))
                 course_label.pack(pady=5)
         else:
             no_results_label = ctk.CTkLabel(self.results_frame, text="No courses found.", font=("Arial", 14))
             no_results_label.pack(pady=20)
-        pass
 
 if __name__ == "__main__":
     UniCourseSearchPage()
