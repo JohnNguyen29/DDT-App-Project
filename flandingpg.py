@@ -1,88 +1,74 @@
+import customtkinter
 import customtkinter as ctk
-from re import search
+from tkinter import messagebox
+from PIL import Image, ImageTk
+import sqlite3
+import subprocess
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
-from PIL import ImageTk, Image
 
-# Setting the appearance mode of CustomTkinter
-ctk.set_appearance_mode("light")
-ctk.set_default_color_theme("blue")
+# Using a class for the home/landing page because it is its own window
+# Taking inspiration from all the other GUI layouts
+class HomePage:
+    def __init__(self):
+        self.root = ctk.CTk()
+        self.root.title("NextSteps Home Page")
+        self.root.geometry("1440x900")
 
-root = ctk.CTk()
-root.title("Landing Page")
-root.geometry("1440x900")
+        # Appearance mode of CustomTkinter
+        ctk.set_appearance_mode("light")
+        ctk.set_default_color_theme("blue")
 
-# Function of the showing the logo image
-def overlay_image():
-    # Image
-    my_img = Image.open("/Users/nguyennguyen/Desktop/templogo.png")
-    resized = my_img.resize((200, 100), Image.LANCZOS)
+        # Navigation frame
+        nav_frame = ctk.CTkFrame(self.root, width=200)
+        nav_frame.pack(side="left", fill="y")
 
-    new_pic = ImageTk.PhotoImage(resized)
+        self.overlay_image(nav_frame)
 
-    label = ctk.CTkLabel(nav_frame, image=new_pic)
-    label.image = new_pic
-    label.pack()
+        # Navigation buttons
+        buttons = [
+            ("Home", None),
+            ("Credit Summary", self.open_credit_summary),
+            ("Course Search", self.open_course_search),
+        ]
 
-# Navigation frame
-nav_frame = ctk.CTkFrame(root, width=200, height=400)
-nav_frame.pack(side="left", fill="y")
+        for button_text, command in buttons:
+            button = ctk.CTkButton(nav_frame, text=button_text, width=150, command=command)
+            button.pack(pady=10)
 
-# Top frame
-top_frame = ctk.CTkFrame(root, width=400, height=450)
-top_frame.pack(side="top", fill="x")
+        # Main content frame
+        self.main_frame = ctk.CTkFrame(self.root)
+        self.main_frame.pack(side="right", fill="both", expand=True)
 
-# Bottom frame
-bottom_frame = ctk.CTkFrame(root, width=400, height=450)
-bottom_frame.pack(side="bottom", fill="x", expand = 10)
+        # Create the GUI elements in the main frame
+        self.create_gui(self.main_frame)
+        self.root.mainloop()
 
-overlay_image()
+    # Function to display the logo image on the navigation bar
+    def overlay_image(self, nav_frame):
+        my_img = Image.open("/Users/nguyennguyen/Desktop/NSLogo.png")  # Update the path
+        resized = my_img.resize((200, 200), Image.LANCZOS)
+        new_pic = ImageTk.PhotoImage(resized)
+        label = ctk.CTkLabel(nav_frame, image=new_pic, text="")
+        label.image = new_pic
+        label.pack()
 
-# Navigation buttons
-buttons = ["Home", "Credit Summary", "Course Search", "Help Centre"]
+    # Function to run/redirect user to the landing page when button is clicked, this function runs
+    def open_course_search(self):
+        self.root.destroy()
+        subprocess.run(["python3", "fcoursesearchpg.py"])
 
-for button_text in buttons:
-    button = ctk.CTkButton(nav_frame, text=button_text, width=150, command=lambda b=button_text: navigate(b))
-    button.pack(pady=10)
+    # Same function as above just different window
+    def open_credit_summary(self):
+        self.root.destroy()
+        subprocess.run(["python3", "fcreditpg.py"])
 
-# Welcome text in top frame
-text_label = ctk.CTkLabel(top_frame, text="Welcome! This is your current NCEA summary...", font=("Arial", 24), text_color="black")
-text_label.pack(pady=50, padx=50, side="left")
+    def create_gui(self, frame):
+        title_font = ctk.CTkFont(size=20, weight="bold")
+        ctk.CTkLabel(frame, text="Welcome! This is your NCEA summary...", font=title_font).pack(pady=20)
 
-# 3 Progress bars for NCEA credits in top frame
-l1progress = ctk.CTkLabel(top_frame, text="Level 1 credits:", font=("Helvetica", 12), text_color="white")
-l1progress.pack(pady=5, side="top")
-progress_bar1 = ctk.CTkLabel(top_frame, fg_color="white", width=200, height=10)
-progress_bar1.pack(pady=5, side="top")
+        # Filter frame
+        filter_frame = ctk.CTkFrame(self.main_frame)
+        filter_frame.pack(pady=20, fill="x")
 
-l2progress = ctk.CTkLabel(top_frame, text="Level 2 credits:", font=("Helvetica", 12), text_color="white")
-l2progress.pack(pady=5, side="top")
-progress_bar2 = ctk.CTkLabel(top_frame, fg_color="white", width=200, height=10)
-progress_bar2.pack(pady=5, side="top")
-
-l3progress = ctk.CTkLabel(top_frame, text="Level 3 credits:", font=("Helvetica", 12), text_color="white")
-l3progress.pack(pady=5, side="top")
-progress_bar3 = ctk.CTkLabel(top_frame, fg_color="white", width=200, height=10)
-progress_bar3.pack(pady=5, side="top")
-
-# Pie chart for the current NCEA level progress
-number_credits = [30, 20, 50]
-grade = ['Achieved', 'Merit', 'Excellence']
-
-fig, ax = plt.subplots(figsize=(3, 3))
-ax.pie(number_credits, labels=grade, autopct='%1.1f%%')
-ax.axis('equal')
-
-canvas = FigureCanvasTkAgg(fig, master=top_frame)
-canvas.draw()
-canvas.get_tk_widget().pack()
-
-# Search bar for courses in bottom frame
-label_searchbar = ctk.CTkLabel(bottom_frame, text="Search courses:", font=("Helvetica", 18), text_color="black")
-label_searchbar.pack(pady=20, side="left")
-entry_searchbar = ctk.CTkEntry(bottom_frame, width=400)
-entry_searchbar.pack(pady=20, side="left")
-button_searchbar = ctk.CTkButton(bottom_frame, text="Search", command=search)
-button_searchbar.pack(pady=20, side="left")
-
-root.mainloop()
+HomePage()
