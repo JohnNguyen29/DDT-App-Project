@@ -12,6 +12,7 @@ root = ctk.CTk()
 root.title("Landing Page")
 root.geometry("1440x900")
 
+# Function of the showing the logo image
 def overlay_image():
     # Image
     my_img = Image.open("/Users/nguyennguyen/Desktop/templogo.png")

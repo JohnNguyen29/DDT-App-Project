@@ -1,9 +1,6 @@
 import customtkinter as ctk
-from re import search
-import matplotlib.pyplot as plt
-from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
-from PIL import ImageTk, Image
 import subprocess
+from PIL import ImageTk, Image
 
 # Setting the appearance mode of CustomTkinter
 ctk.set_appearance_mode("light")
@@ -13,10 +10,11 @@ root = ctk.CTk()
 root.title("Landing Page")
 root.geometry("1440x900")
 
+#
 def overlay_image():
-    # Image
+    # Logo image
     my_img = Image.open("/Users/nguyennguyen/Desktop/NSLogo.png")
-    resized = my_img.resize((220, 150), Image.LANCZOS)
+    resized = my_img.resize((200, 200), Image.LANCZOS)
 
     new_pic = ImageTk.PhotoImage(resized)
 
@@ -24,8 +22,17 @@ def overlay_image():
     label.image = new_pic
     label.pack()
 
+# Function to open the credit page
 def open_credit_summary():
     subprocess.run(["python3", "creditpg.py"])
+
+# Function to open the course search page
+def open_course_search():
+    subprocess.run(["python3", "course_search.py"])
+
+#Function to open the help center
+def open_help_center():
+    subprocess.run(["python3", "help_center.py"])
 
 # Navigation frame
 nav_frame = ctk.CTkFrame(root, width=200)
@@ -46,17 +53,28 @@ for frame in (home_frame, course_search_frame, help_center_frame):
     frame.grid(row=0, column=0, sticky="nsew")
 
 # Navigation buttons
-buttons = [("Home", home_frame), ("Credit Summary", None), ("Course Search", course_search_frame), ("Help Center", help_center_frame)]
-
+buttons = [
+    ("Home", None),
+    ("Credit Summary", None),  # Button to open credit summary script
+    ("Course Search", None),  # Button to open course search script
+    ("Help Center", None)  # Button to open help center script
+]
+# For loop for all the buttons. Button placement on the frame and if clicked, the fucnction command coded above runs.
 for button_text, frame in buttons:
     if frame:
         button = ctk.CTkButton(nav_frame, text=button_text, width=150, command=lambda f=frame: show_frame(f))
-    else:
+    elif button_text == "Credit Summary":
         button = ctk.CTkButton(nav_frame, text=button_text, width=150, command=open_credit_summary)
+    elif button_text == "Course Search":
+        button = ctk.CTkButton(nav_frame, text=button_text, width=150, command=open_course_search)
+    elif button_text == "Help Center":
+        button = ctk.CTkButton(nav_frame, text=button_text, width=150, command=open_help_center)
+    else:
+        button = ctk.CTkButton(nav_frame, text=button_text, width=150)  # Default case
     button.pack(pady=10)
 
 # Home frame content
-text_label = ctk.CTkLabel(home_frame, text="WELCOME *NAME*", font=("Arial", 24), text_color="black")
+text_label = ctk.CTkLabel(home_frame, text="WELCOME!", font=("Arial", 24), text_color="black")
 text_label.pack(padx=20, pady=10)
 
 # Course Search frame content
@@ -96,6 +114,10 @@ for i, course in enumerate(bookmarked_courses):
 # Help Center frame content
 help_label = ctk.CTkLabel(help_center_frame, text="Help Center", font=("Helvetica", 24), text_color="black")
 help_label.pack(padx=20, pady=20)
+
+# Function to show selected frame
+def show_frame(frame):
+    frame.tkraise()
 
 # Show the home frame initially
 home_frame.tkraise()
