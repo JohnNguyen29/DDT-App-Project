@@ -89,7 +89,7 @@ class LoginFront:
             user = cursor.fetchone()
         # If the user details are correct, they will get redirected to the landing page. Otherwise, they will get an error message
         if user:
-            subprocess.run(["python3", "landingpagetest.py"])
+            subprocess.run(["python3", "flandingpg.py"])
             self.root.destroy()
         else:
             messagebox.showinfo("", "Incorrect Student ID or Password. Please try again")
@@ -210,7 +210,6 @@ class RegisterWindow:
     def cancel_reg(self):
         self.register_window.destroy()
         self.main_window.deiconify()
-
 
 if __name__ == "__main__":
     root = ctk.CTk()
