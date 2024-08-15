@@ -112,7 +112,7 @@ class RegisterWindow:
         self.frame.place(relx=0.5, rely=0.05, anchor='n')
 
         ctk.CTkLabel(self.frame,
-                     text="Please enter the first 3 letters of your subjects e.g English = ENG, DDT = DDT etc",
+                     text="Please enter the first 3 letters of your subjects e.g English = ENG, DDT = DDT etc \n If you have less than 6 subjects, fill the remaining ones with 'NA'",
                      font=self.label_font).pack(pady=10)
 
         self.form_frame = ctk.CTkFrame(self.register_window)
