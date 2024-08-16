@@ -11,7 +11,6 @@ import re
 # regardless of the user's system light/dark mode
 customtkinter.set_appearance_mode("light")
 
-
 def user_details_tble():
     """Creates a table in the SQL database if there isn't already.
     Asks the user to input information to store in the database.
@@ -267,7 +266,6 @@ class RegisterWindow:
     def cancel_reg(self):
         '''If the user clicks the cancel button, the window will
         be destroyed and the sign-in page will be visible again
-
         '''
         self.register_window.destroy()
         self.main_window.deiconify()

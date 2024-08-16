@@ -25,7 +25,8 @@ def fetch_grades_data(student_id):
     return data
 
 def fetch_grade_data():
-    """Function to fetch only the grades and credits in 'grades' table in users.db
+    """Function to fetch only the grades and
+    credits in 'grades' table in users.db
     """
     conn = sqlite3.connect('users.db')
     cursor = conn.cursor()
@@ -90,8 +91,9 @@ class HomePage:
         self.create_gui(self.welcome_frame, self.top_frame, self.bottom_frame)
         self.root.mainloop()
 
-    # Function to display the logo image on the navigation bar
     def logo_image(self, nav_frame):
+        """Function to display the logo image on the navigation bar
+        """
         my_img = Image.open("/Users/nguyennguyen/Desktop/DDT/NSLogo.png")
         resized = my_img.resize((200, 200), Image.LANCZOS)
         new_pic = ImageTk.PhotoImage(resized)
@@ -101,16 +103,21 @@ class HomePage:
 
     # Function to run/redirect user to the landing page when button is clicked
     def open_course_search(self):
+        """Function to run/redirect user to the
+        landing page when button is clicked
+        """
         self.root.destroy()
         subprocess.run(["python3", "fcoursesearchpg.py", self.student_id])
 
     # Function to redirect to the credit summary page
     def open_credit_summary(self):
+        """Function to redirect to the credit summary page
+        """
         self.root.destroy()
         subprocess.run(["python3", "fcreditpg.py", self.student_id])
 
-    # Function to create the GUI
     def create_gui(self, welcome_frame, top_frame, bottom_frame):
+        """ Function to create the pages GUI"""
         # Welcome message in the welcome frame
         title_font = ctk.CTkFont(size=20, weight="bold")
         ctk.CTkLabel(welcome_frame, text="Welcome! This is your NCEA summary...",
@@ -183,6 +190,9 @@ class HomePage:
     # Function to update the pie chart when the user enters a grade
     # Modified function to update the pie chart and progress bars
     def update_pie_chart(self):
+        """Function to update the pie chart when the user enters a grade
+        Modified function to update the pie chart and progress bars
+        """
         # Clear any existing widgets in top_frame
         for widget in self.top_frame.winfo_children():
             widget.destroy()
@@ -275,8 +285,10 @@ class HomePage:
 
         chart.draw()
 
-    # Function to create and update a progress bar with a parent frame parameter
     def create_progress_bar(self, label_text, value, max_value, parent, total=False):
+        """Function to create and update a
+        progress bar with a parent frame parameter
+        """
         label_font = ctk.CTkFont(size=14, weight="bold") if total else None
         ctk.CTkLabel(parent, text=f"{label_text} ({value}/{max_value})",
                      font=label_font).pack(pady=5)
@@ -286,9 +298,10 @@ class HomePage:
         progress_bar.set(value / max_value)
         progress_bar.pack(pady=5, fill="x")
 
-    # Function to display bookmarked courses in the bottom frame
-    # Fetches bookmarks from the bookmarks table in 'users.db'
     def display_bookmarked_courses(self, frame):
+        """Function to display bookmarked courses in the bottom frame
+        Fetches bookmarks from the bookmarks table in 'users.db'
+        """
         conn = sqlite3.connect("users.db")
         cursor = conn.cursor()
 
@@ -322,9 +335,11 @@ class HomePage:
                                               font=("Arial", 14))
             no_bookmarks_label.pack(pady=20)
 
-    # Function to remove a bookmark
-    # Editing the table using DELETE and shows a message box that bookmark has been removed
     def remove_bookmark(self, course):
+        """Function to remove a bookmark
+        Editing the table using DELETE and shows
+        a message box that bookmark has been removed
+        """
         conn = sqlite3.connect("users.db")
         cursor = conn.cursor()
 

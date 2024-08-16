@@ -20,31 +20,30 @@ CREATE TABLE IF NOT EXISTS all_courses (
 courses = {
     "University of Auckland": {
         "Arts": [
-            ("Bachelor of Arts", "A versatile degree with a range of subjects.", 180),
-            ("Bachelor of Communications", "Focuses on media and communication.", 200)
+            ("Bachelor of Arts", "Your BA study can develop the knowledge and skills such as communication and creative thinking", 150),
+            ("Bachelor of Communications", "The Bachelor of Communication is designed to impart advanced understanding of the significant role of communication in our world.", 180)
         ],
         "Business, Commerce, and Finance": [
-            ("Bachelor of Commerce", "Covers areas like finance, marketing, and management.", 220)
+            ("Bachelor of Commerce", "Covers areas like finance, marketing, and management.", 165)
         ],
         "CADI": [
-            ("Bachelor of Architectural Studies", "Learn the fundamentals of architectural design.", 250),
-            ("Bachelor of Design", "Explore creative design in various mediums.", 210),
-            ("Bachelor of Urban Planning (Hons)", "Focus on urban development and planning.", 230)
+            ("Bachelor of Architectural Studies", "Learn the fundamentals of architectural design.", 230),
+            ("Bachelor of Design", "Explore creative design in various mediums.", 180),
+            ("Bachelor of Urban Planning (Hons)", "Focus on urban development and planning.", 180)
         ],
         "Engineering": [
-            ("Bachelor of Engineering (Hons)", "A comprehensive degree in various engineering fields.", 270)
+            ("Bachelor of Engineering (Hons)", "A comprehensive degree in various engineering fields.", 260)
         ],
         "Health, Medicine, and Biomedical Science": [
-            ("Bachelor of Biomedical Science (Hons)", "Focuses on advanced biomedical research.", 240),
-            ("Bachelor of Health Science", "A broad introduction to health-related fields.", 200),
+            ("Bachelor of Health Science", "A broad introduction to health-related fields.", 250),
             ("Bachelor of Pharmacy", "Prepares students for careers in pharmacy.", 260)
         ],
         "Law": [
             ("Bachelor of Laws", "Provides a solid foundation in legal principles.", 290)
         ],
         "Technology, Maths, and Science": [
-            ("Bachelor of Science", "Covers various scientific disciplines.", 210),
-            ("Bachelor of Advanced Science (Hons)", "An advanced degree in scientific research.", 250)
+            ("Bachelor of Science", "Covers various scientific disciplines such as computer science.", 210),
+            ("Bachelor of Advanced Science (Hons)", "An advanced degree in scientific research in any field of science.", 250)
         ],
     },
     "Auckland University of Technology": {

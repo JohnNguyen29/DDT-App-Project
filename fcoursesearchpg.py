@@ -49,8 +49,9 @@ class UniCourseSearchPage:
 
         self.root.mainloop()
 
-    # Function to display the logo image on the navigation bar
     def logo_image(self, nav_frame):
+        """Function to display the logo image on the navigation bar
+        """
         my_img = Image.open("/Users/nguyennguyen/Desktop/DDT/NSLogo.png")
         resized = my_img.resize((200, 200), Image.LANCZOS)
         new_pic = ImageTk.PhotoImage(resized)
@@ -58,19 +59,23 @@ class UniCourseSearchPage:
         label.image = new_pic
         label.pack()
 
-    # Function to run/redirect user to the landing
-    # page when button is clicked, this function runs
     def open_home(self):
+        """Function to run/redirect user to the landing
+        page when button is clicked, this function runs
+        """
         self.root.destroy()
         subprocess.run(["python3", "flandingpg.py", self.student_id])
 
-    # Same function as above just different window
     def open_credit_summary(self):
+        """Function to redirected the user to the credit
+        summary page when clicked. Same function as above
+        """
         self.root.destroy()
         subprocess.run(["python3", "fcreditpg.py", self.student_id])
 
-    # Creating the GUI for the page
     def create_gui(self, frame):
+        """Creating the GUI for the page
+        """
         title_font = ctk.CTkFont(size=20, weight="bold")
         ctk.CTkLabel(frame, text="University Course Search", font=title_font).pack(pady=20)
 
@@ -116,9 +121,10 @@ class UniCourseSearchPage:
         # Display any bookmarked courses
         self.display_bookmarked_courses()
 
-    # Function to display bookmarked courses
-    # Fetches bookmarks from the bookmarks table in 'users.db'
     def display_bookmarked_courses(self):
+        """Function to display bookmarked courses
+        Fetches bookmarks from the bookmarks table in 'users.db'
+        """
         conn = sqlite3.connect("users.db")
         cursor = conn.cursor()
 
@@ -146,8 +152,8 @@ class UniCourseSearchPage:
                                               command=lambda c=course: self.remove_bookmark(c))
                 remove_button.pack(side="right")
 
-    # Function to search courses and display dropdowns for each
     def search_courses(self):
+        """Function to search courses and display dropdowns for each"""
         university = self.university_var.get()
         subject = self.subject_var.get()
 
@@ -203,9 +209,11 @@ class UniCourseSearchPage:
                                             text="No courses found", font=("Arial", 14))
             no_results_label.pack(pady=20)
 
-    # Function to add a bookmark
-    # INSERT INTO function to add to the table
+
     def add_bookmark(self, course, university, subject):
+        """Function to add a bookmark
+        INSERT INTO function to add to the table
+        """
         conn = sqlite3.connect("users.db")
         cursor = conn.cursor()
 
@@ -215,11 +223,14 @@ class UniCourseSearchPage:
         conn.close()
 
         messagebox.showinfo("Bookmark Added", f"Course '{course}' has been bookmarked")
-        self.search_courses()  # Refresh the course list to show the updated bookmarks
+        self.search_courses()
+        # Refresh the course list to show the updated bookmarks
 
-    # Function to remove a bookmark
-    # Editing the table using DELETE and shows a message box that bookmark has been removed
     def remove_bookmark(self, course):
+        """Function to remove a bookmark
+        Editing the table using DELETE and shows a
+        message box that bookmark has been removed
+        """
         conn = sqlite3.connect("users.db")
         cursor = conn.cursor()
 

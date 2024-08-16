@@ -76,7 +76,6 @@ def fetch_grades_data(student_id):
         data = cursor.fetchall()
     return data
 
-# Function to fetch only the grades and credits in 'grades' table in users.db
 def fetch_grade_data():
     """Function to fetch only the grades and credits in 'grades' table in users.db
     """
@@ -163,8 +162,9 @@ class CreditSummaryWindow:
 
         self.root.mainloop()
 
-    # Function of the logo image on the navigation bar
     def logo_image(self, nav_frame):
+        """Function to display the logo image on the navigation bar
+        """
         my_img = Image.open("/Users/nguyennguyen/Desktop/DDT/NSLogo.png")
         resized = my_img.resize((200, 200), Image.LANCZOS)
         new_pic = ImageTk.PhotoImage(resized)
@@ -172,22 +172,26 @@ class CreditSummaryWindow:
         label.image = new_pic
         label.pack()
 
-    # Function when button is clicked, the landing page script will run
     def open_home(self):
+        """Function when button is clicked, the landing page script will run
+        """
         self.root.destroy()  # Close the current window
         subprocess.run(["python3", "flandingpg.py", self.student_id])
 
-    # Function when button is clicked, the course search script will run
     def open_course_search(self):
+        """Function when button is clicked, the course search script will run
+        """
         self.root.destroy()  # Close the current window
         subprocess.run(["python3", "fcoursesearchpg.py", self.student_id])
 
-    # Function to show frame
     def show_frame(self, frame):
+        """Function to show frame
+        """
         frame.tkraise()
 
-    # Function of all the avaliable subjects stored in a set
     def create_gui(self, frame, year_level, subjects):
+        """Function of all the avaliable subjects stored in a set
+        """
         subject_details = {
             "13MAT": "NCEA Level 3 Mathematics (Calculus)",
             "13ENG": "NCEA Level 3 English",
@@ -206,7 +210,8 @@ class CreditSummaryWindow:
                           "You cannot change grades after saving.",
                      font=ctk.CTkFont(size=12, weight="bold")).pack(pady=10)
 
-        # Creating another frame above the table frame for the pie chart and progress bars to place
+        # Creating another frame above the table
+        # frame for the pie chart and progress bars to place
         self.chart_frame = ctk.CTkFrame(frame)
         self.chart_frame.pack(pady=10, padx=10, fill="both", expand=True)
 
@@ -259,11 +264,12 @@ class CreditSummaryWindow:
                                    lambda e, sc=f"{year_level}{subject_code}",
                                           r=row: self.toggle_assessment_display(sc,r))
 
-    # Function to show the assessment data
-    # This is for when the subject is clicked,
-    # the assessments of the subject will show in the table
-    # All other subjects will hide
     def toggle_assessment_display(self, subject_code, row):
+        """Function to show the assessment data
+        This is for when the subject is clicked,
+        the assessments of the subject will show in the table
+        All other subjects will hide
+        """
         # Hide all widgets first
         for widget in self.table_frame.grid_slaves():
             if int(widget.grid_info()["row"]) > 0:
@@ -321,11 +327,11 @@ class CreditSummaryWindow:
         for key, (grade_label, row, column) in self.grade_labels.items():
             grade_label.grid(row=row, column=column, padx=5, pady=5)
 
+    def calculate_scores(self, grade_data):
         """Calculating the rank score based on the grade_data
         the user has inputted in fcreditspg.py which is
         stored in the 'grades' table in 'user's db'
         """
-    def calculate_scores(self, grade_data):
         excellence_credits = 0
         merit_credits = 0
         achieved_credits = 0
@@ -370,7 +376,8 @@ class CreditSummaryWindow:
         rank_score_achieved = best_achieved_credits * 2
 
         # Total rank score when all are added together
-        total_rank_score = rank_score_excellence + rank_score_merit + rank_score_achieved
+        total_rank_score = (rank_score_excellence +
+                            rank_score_merit + rank_score_achieved)
 
         return (
             excellence_credits, merit_credits, achieved_credits,
@@ -382,6 +389,8 @@ class CreditSummaryWindow:
     # Function to update the pie chart when the user enters a grade
     # Modified function to update the pie chart and progress bars
     def update_pie_chart(self):
+        """Function to update the pie chart when the user enters a grade
+        Modified function to update the pie chart and progress bars"""
         # Clear any existing widgets in chart_frame
         for widget in self.chart_frame.winfo_children():
             widget.destroy()
@@ -461,7 +470,8 @@ class CreditSummaryWindow:
         for row_index, row in enumerate(data):
             for col_index, value in enumerate(row):
                 label = ctk.CTkLabel(rank_score_frame, text=value, anchor="w")
-                label.grid(row=row_index + 1, column=col_index, padx=10, pady=5, sticky="w")
+                label.grid(row=row_index + 1, column=col_index,
+                           padx=10, pady=5, sticky="w")
 
         # Right Side: Pie Chart
         pie_chart_frame = ctk.CTkFrame(self.chart_frame)
@@ -476,19 +486,24 @@ class CreditSummaryWindow:
 
         chart.draw()
 
-    # Modified function to create and update a progress bar with a parent frame parameter
     def create_progress_bar(self, label_text, value, max_value, parent, total=False):
+        """Modified function to create and update a progress bar with a parent frame parameter
+        """
         label_font = ctk.CTkFont(size=14, weight="bold") if total else None
-        ctk.CTkLabel(parent, text=f"{label_text} ({value}/{max_value})", font=label_font).pack(pady=5)
+        ctk.CTkLabel(parent, text=f"{label_text} ({value}/{max_value})",
+                     font=label_font).pack(pady=5)
 
         progress_bar = ctk.CTkProgressBar(parent, height=30 if total else None)
         progress_bar.set(value / max_value)  # Set the progress (value/max_value)
         progress_bar.pack(pady=5, fill="x")
 
-    # Function to save the grades the user inputs
-    # NA = 0 credits, all other grades = corrosponding credits
-    # when the user clicks save, the 'grades' table will be populated with the users input
+    #
     def save_grades(self):
+        """Function to save the grades the user inputs
+        NA = 0 credits, all other grades = corrosponding credits
+        when the user clicks save, the
+        'grades' table will be populated with the users input
+        """
         student_id = self.student_id
         valid_grades = {
             "NA": "NOT ACHIEVED",
@@ -497,7 +512,8 @@ class CreditSummaryWindow:
             "E": "EXCELLENCE"
         }
 
-        # checking to see if the grade the user has entered is one of the four grades
+        # checking to see if the grade the
+        # user has entered is one of the four grades
         for key, entry in list(self.grade_entries.items()):
             grade = entry.get().strip().upper()
             if grade not in valid_grades:
@@ -533,7 +549,8 @@ class CreditSummaryWindow:
                             INSERT INTO grades (student_id, subject_code, 
                             assessment_description, grade, credits)
                             VALUES (?, ?, ?, ?, ?)
-                        ''', (student_id, subject_code, assessment_description, grade, assessment[2]))
+                        ''', (student_id, subject_code,
+                              assessment_description, grade, assessment[2]))
                         connection.commit()
 
                         self.saved_grades[key] = grade
@@ -551,9 +568,11 @@ class CreditSummaryWindow:
         self.update_pie_chart()
         messagebox.showinfo("", "Grades saved successfully!")
 
-    # Function to show the pie chart in the frame above the table frame
-    # Fetches the students grades through their student ID and the grades table
+
     def show_pie_chart(self):
+        """Function to show the pie chart in the frame above the table frame
+        Fetches the students grades through their student ID and the grades table
+        """
         data = fetch_grades_data(self.student_id)
         grades = [row[0] for row in data]
         credits = [row[1] for row in data]
