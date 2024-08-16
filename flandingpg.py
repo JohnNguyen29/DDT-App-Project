@@ -28,12 +28,12 @@ def fetch_grade_data():
     """Function to fetch only the grades and credits in 'grades' table in users.db
     """
     conn = sqlite3.connect('users.db')
-    cursor = connection.cursor()
+    cursor = conn.cursor()
 
     cursor.execute("SELECT grade, credits FROM grades")
     grade_data = cursor.fetchall()
 
-    connection.close()
+    conn.close()
     return grade_data
 
 class HomePage:

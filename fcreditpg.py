@@ -1,4 +1,4 @@
-"""This file is the credit summary page for my app, Next Steps""""
+"""This file is the credit summary page for my app, Next Steps"""
 import customtkinter
 import customtkinter as ctk
 from tkinter import messagebox
@@ -246,8 +246,7 @@ class CreditSummaryWindow:
         # the assessment table and displays it in the table
         for row, subject_code in enumerate(subjects, start=1):
             if subject_code:
-                full_subject = f"{year_level}{subject_code} - {subject_details.get
-                (f'{year_level}{subject_code}', 'Unknown Subject')}"
+                full_subject = f"{year_level}{subject_code} - {subject_details.get(f'{year_level}{subject_code}', 'Unknown Subject')}"
                 subject_label = ctk.CTkLabel(self.table_frame, text=full_subject)
                 subject_label.grid(row=row, column=0, padx=5, pady=5)
 
