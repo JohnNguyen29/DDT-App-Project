@@ -26,7 +26,6 @@ def fetch_subject_details(student_id):
         subjects = user_data[1:]
         return year_level, subjects
 
-
 # Function to fetch all assessment/standard data from all_standards.py and all_standards SQL table
 def fetch_assessments(subject_code):
     with sqlite3.connect("users.db") as connection:
@@ -68,6 +67,17 @@ def fetch_grades_data(student_id):
         data = cursor.fetchall()
     return data
 
+# Function to fetch only the grades and credits in 'grades' table in users.db
+def fetch_grade_data():
+    conn = sqlite3.connect('users.db')
+    cursor = conn.cursor()
+
+    cursor.execute("SELECT grade, credits FROM grades")
+    grade_data = cursor.fetchall()
+
+    conn.close()
+    return grade_data
+
 # Used a class for the credit summary window to make the code easier to work with
 # when add more features that require other windows
 class CreditSummaryWindow:
@@ -105,6 +115,8 @@ class CreditSummaryWindow:
             ("Course Search", None),  # Same as Home
         ]
 
+        # For loop that creates the buttons and the command when pressed
+        # The functions below will run
         for button_text, frame in buttons:
             if frame:
                 button = ctk.CTkButton(nav_frame, text=button_text, width=150,
@@ -178,7 +190,7 @@ class CreditSummaryWindow:
         self.table_frame = ctk.CTkFrame(frame)
         self.table_frame.pack(pady=5, padx=5, fill="both", expand=True)
 
-        ctk.CTkButton(frame, text="Show Pie Chart", command=self.update_pie_chart).pack(pady=10)
+        ctk.CTkButton(frame, text="Show NCEA Progress", command=self.update_pie_chart).pack(pady=10)
 
         # Set weights for each column to distribute space
         self.table_frame.columnconfigure(0, weight=1)
@@ -267,18 +279,68 @@ class CreditSummaryWindow:
         for key, (grade_label, row, column) in self.grade_labels.items():
             grade_label.grid(row=row, column=column, padx=5, pady=5)
 
+    def calculate_scores(self, grade_data):
+        excellence_credits = 0
+        merit_credits = 0
+        achieved_credits = 0
+
+        for grade, credits in grade_data:
+            if grade == 'E':
+                excellence_credits += credits
+            elif grade == 'M':
+                merit_credits += credits
+            elif grade == 'A':
+                achieved_credits += credits
+
+        total_credits = excellence_credits + merit_credits + achieved_credits
+
+        if total_credits > 80:
+            if excellence_credits >= 80:
+                best_excellence_credits = 80
+                best_merit_credits = 0
+                best_achieved_credits = 0
+            else:
+                best_excellence_credits = excellence_credits
+                remaining_credits = 80 - best_excellence_credits
+
+                if (best_excellence_credits + merit_credits) >= 80:
+                    best_merit_credits = remaining_credits
+                    best_achieved_credits = 0
+                else:
+                    best_merit_credits = merit_credits
+                    remaining_credits -= merit_credits
+                    best_achieved_credits = min(achieved_credits, remaining_credits)
+        else:
+            best_excellence_credits = excellence_credits
+            best_merit_credits = merit_credits
+            best_achieved_credits = achieved_credits
+
+        rank_score_excellence = best_excellence_credits * 4
+        rank_score_merit = best_merit_credits * 3
+        rank_score_achieved = best_achieved_credits * 2
+
+        total_rank_score = rank_score_excellence + rank_score_merit + rank_score_achieved
+
+        return (
+            excellence_credits, merit_credits, achieved_credits,
+            best_excellence_credits, best_merit_credits, best_achieved_credits,
+            rank_score_excellence, rank_score_merit, rank_score_achieved,
+            total_rank_score
+        )
+
     # Function to update the pie chart when the user enters a grade
     # Modified function to update the pie chart and progress bars
     def update_pie_chart(self):
-        # Clear the previous chart and progress bars
+        # Clear any existing widgets in chart_frame
         for widget in self.chart_frame.winfo_children():
             widget.destroy()
 
-        self.chart_frame.grid_columnconfigure(0, weight=1, uniform="equal")
-        self.chart_frame.grid_columnconfigure(1, weight=1, uniform="equal")
+        # Configure grid layout for chart_frame
+        self.chart_frame.grid_columnconfigure(0, weight=1)
+        self.chart_frame.grid_columnconfigure(1, weight=2)
+        self.chart_frame.grid_columnconfigure(2, weight=1)
         self.chart_frame.grid_rowconfigure(0, weight=1)
 
-        # Fetch data from the 'grades' table in users.db
         with sqlite3.connect("users.db") as connection:
             cursor = connection.cursor()
             cursor.execute("""
@@ -295,27 +357,58 @@ class CreditSummaryWindow:
         merit_credits = grades.get("M", 0)
         excellence_credits = grades.get("E", 0)
 
-        # Calculate the cumulative credits for each category
         merit_total = merit_credits + excellence_credits
         achieved_total = achieved_credits + merit_credits + excellence_credits
         total_credits = achieved_total
 
-        # Create the pie chart
+        grade_data = fetch_grade_data()
+        (
+            excellence_credits, merit_credits, achieved_credits,
+            best_excellence_credits, best_merit_credits, best_achieved_credits,
+            rank_score_excellence, rank_score_merit, rank_score_achieved,
+            total_rank_score
+        ) = self.calculate_scores(grade_data)
+
+        # Left Section: Progress Bars
         progress_bar_frame = ctk.CTkFrame(self.chart_frame)
-        progress_bar_frame.grid(row=0, column=0, padx=10, pady=10, sticky="nsw")
+        progress_bar_frame.grid(row=0, column=0, padx=20, pady=10, sticky="nsew")
 
         self.create_progress_bar("Achieved Endorsement", achieved_total, 50, parent=progress_bar_frame)
         self.create_progress_bar("Merit Endorsement", merit_total, 50, parent=progress_bar_frame)
         self.create_progress_bar("Excellence Endorsement", excellence_credits, 50, parent=progress_bar_frame)
         self.create_progress_bar("NCEA Level Certificate", total_credits, 80, parent=progress_bar_frame)
 
-        # Create the pie chart on the right
-        fig, ax = plt.subplots(figsize=(2, 2))
+        # Center Section: Rank Score Table
+        rank_score_frame = ctk.CTkFrame(self.chart_frame)
+        rank_score_frame.grid(row=0, column=1, padx=20, pady=10, sticky="nsew")
+
+        headers = ["", "Excellence Credits", "Merit Credits", "Achieved Credits"]
+        data = [
+            ["Number of Credits", excellence_credits, merit_credits, achieved_credits],
+            ["Best 80 Credits", best_excellence_credits, best_merit_credits, best_achieved_credits],
+            ["Rank Score", rank_score_excellence, rank_score_merit, rank_score_achieved],
+            ["Total Rank Score", total_rank_score, "", ""]
+        ]
+
+        for i, header in enumerate(headers):
+            label = ctk.CTkLabel(rank_score_frame, text=header, anchor="w")
+            label.grid(row=0, column=i, padx=10, pady=5, sticky="w")
+
+        for row_index, row in enumerate(data):
+            for col_index, value in enumerate(row):
+                label = ctk.CTkLabel(rank_score_frame, text=value, anchor="w")
+                label.grid(row=row_index + 1, column=col_index, padx=10, pady=5, sticky="w")
+
+        # Right Section: Pie Chart
+        pie_chart_frame = ctk.CTkFrame(self.chart_frame)
+        pie_chart_frame.grid(row=0, column=2, padx=20, pady=10, sticky="nsew")
+
+        fig, ax = plt.subplots(figsize=(2, 2))  # Adjust the size of the pie chart
         ax.pie([achieved_credits, merit_credits, excellence_credits],
                labels=["Achieved", "Merit", "Excellence"], autopct='%1.1f%%', startangle=90)
 
-        chart = FigureCanvasTkAgg(fig, master=self.chart_frame)
-        chart.get_tk_widget().grid(row=0, column=1, padx=10, pady=10, sticky="nse")
+        chart = FigureCanvasTkAgg(fig, master=pie_chart_frame)
+        chart.get_tk_widget().pack(expand=True, fill="both")
 
         chart.draw()
 
