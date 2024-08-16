@@ -10,9 +10,8 @@ import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 
 def fetch_grades_data(student_id):
-    """Function to fetch the users details such as student ID
-    and subjects from 'user.db'instead of creating a new database,
-    all details is all in the same database
+    """Function to fetch the users grades data such as student ID
+    and sum of credits from 'user.db'
     """
     with sqlite3.connect("users.db") as connection:
         cursor = connection.cursor()
@@ -29,15 +28,14 @@ def fetch_grade_data():
     """Function to fetch only the grades and credits in 'grades' table in users.db
     """
     conn = sqlite3.connect('users.db')
-    cursor = conn.cursor()
+    cursor = connection.cursor()
 
     cursor.execute("SELECT grade, credits FROM grades")
     grade_data = cursor.fetchall()
 
-    conn.close()
+    connection.close()
     return grade_data
 
-# Using a class for the home/landing page because it is its own window
 class HomePage:
     """Using a class for the home/landing page because it is its own window
     Able to store mulitple functions for feature of the GUI and app
