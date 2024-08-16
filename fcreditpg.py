@@ -4,6 +4,7 @@ from tkinter import messagebox
 from PIL import Image, ImageTk
 import sqlite3
 import subprocess
+import sys
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 
@@ -154,12 +155,12 @@ class CreditSummaryWindow:
     # Function when button is clicked, the landing page script will run
     def open_home(self):
         self.root.destroy()  # Close the current window
-        subprocess.run(["python3", "flandingpg.py"])  # Replace 'landingpagetest.py' with 'flandingpg.py'
+        subprocess.run(["python3", "flandingpg.py", self.student_id])  # Replace 'landingpagetest.py' with 'flandingpg.py'
 
     # Function when button is clicked, the course search script will run
     def open_course_search(self):
         self.root.destroy()  # Close the current window
-        subprocess.run(["python3", "fcoursesearchpg.py"])
+        subprocess.run(["python3", "fcoursesearchpg.py", self.student_id])
 
     # Function to show frame
     def show_frame(self, frame):
@@ -492,6 +493,9 @@ class CreditSummaryWindow:
         plt.show()
 
 if __name__ == "__main__":
-    # Example student ID to fetch details
-    student_id = "22656"
-    CreditSummaryWindow(student_id)
+    if len(sys.argv) > 1:
+        student_id = sys.argv[1]
+        app = CreditSummaryWindow(student_id)
+    else:
+        print("Error: student_id argument is missing.")
+

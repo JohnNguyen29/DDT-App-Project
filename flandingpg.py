@@ -4,12 +4,14 @@ from tkinter import messagebox
 from PIL import Image, ImageTk
 import sqlite3
 import subprocess
+import sys
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 
 # Using a class for the home/landing page because it is its own window
 class HomePage:
-    def __init__(self):
+    def __init__(self, student_id):
+        self.student_id = student_id
         self.root = ctk.CTk()
         self.root.title("NextSteps Home Page")
         self.root.geometry("1440x900")
@@ -67,12 +69,12 @@ class HomePage:
     # Function to run/redirect user to the landing page when button is clicked
     def open_course_search(self):
         self.root.destroy()
-        subprocess.run(["python3", "fcoursesearchpg.py"])
+        subprocess.run(["python3", "fcoursesearchpg.py", self.student_id])
 
     # Function to redirect to the credit summary page
     def open_credit_summary(self):
         self.root.destroy()
-        subprocess.run(["python3", "fcreditpg.py"])
+        subprocess.run(["python3", "fcreditpg.py", self.student_id])
 
     # Function to create the GUI
     def create_gui(self, welcome_frame, top_frame, bottom_frame):
@@ -124,4 +126,5 @@ class HomePage:
         self.display_bookmarked_courses(self.bottom_frame)  # Refresh the bookmark list
 
 if __name__ == "__main__":
-    HomePage()
+    student_id = sys.argv[1]  # Get student_id from command-line arguments
+    HomePage(student_id)

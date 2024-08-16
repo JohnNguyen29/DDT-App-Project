@@ -5,6 +5,7 @@ from PIL import Image, ImageTk
 import sqlite3
 import subprocess
 import re
+import sys
 
 # Sets default GUI color as light mode regardless of the user's system light/dark mode
 customtkinter.set_appearance_mode("light")
@@ -89,11 +90,15 @@ class LoginFront:
             user = cursor.fetchone()
         # If the user details are correct, they will get redirected to the landing page. Otherwise, they will get an error message
         if user:
-            subprocess.run(["python3", "flandingpg.py"])
-            self.root.destroy()
+            self.open_landing_pg(student_id)
         else:
             messagebox.showinfo("", "Incorrect Student ID or Password. Please try again")
 
+    # Function to open the landing page when the user enters the correct studentid and password
+    def open_landing_pg(self, student_id):
+        self.root.withdraw()
+        subprocess.run(["python3", "flandingpg.py", student_id])  # Pass the student_id to the home page script
+        self.root.destroy()
 
 # Class of the registration window. Used variable RegisterWindow because what the user will see is the registration form
 class RegisterWindow:
@@ -176,7 +181,7 @@ class RegisterWindow:
 
         # Combine year level with each subject code and capitalize the subject code
         for i in range(1, 7):
-            values[f"Subject Code {i}"] = f"{year_level}{values[f'Subject Code {i}'].upper()}"
+            values[f"Subject Code {i}"] = f"{values[f'Subject Code {i}'].upper()}"
 
         # If all the fields are filled out, the code will connect with the SQL database
         # and add the users details to the database in the table created at the start

@@ -3,10 +3,12 @@ from tkinter import messagebox
 from PIL import Image, ImageTk
 import sqlite3
 import subprocess
+import sys
 
 # Using a class for the course search page because it is a window
 class UniCourseSearchPage:
-    def __init__(self):
+    def __init__(self, student_id):
+        self.student_id = student_id
         self.root = ctk.CTk()
         self.root.title("University Course Search")
         self.root.geometry("1440x900")
@@ -53,12 +55,12 @@ class UniCourseSearchPage:
     # Function to run/redirect user to the landing page when button is clicked, this function runs
     def open_home(self):
         self.root.destroy()
-        subprocess.run(["python3", "flandingpg.py"])
+        subprocess.run(["python3", "flandingpg.py", self.student_id])
 
     # Same function as above just different window
     def open_credit_summary(self):
         self.root.destroy()
-        subprocess.run(["python3", "fcreditpg.py"])
+        subprocess.run(["python3", "fcreditpg.py", self.student_id])
 
     # Creating the GUI for the page
     def create_gui(self, frame):
@@ -173,7 +175,7 @@ class UniCourseSearchPage:
                 rank_score_label = ctk.CTkLabel(details_frame, text=f"Entry Requirements: Rank Score {rank_score}", font=("Arial", 12))
                 rank_score_label.pack(anchor="w")
         else:
-            no_results_label = ctk.CTkLabel(self.results_frame, text="No courses found.", font=("Arial", 14))
+            no_results_label = ctk.CTkLabel(self.results_frame, text="No courses found", font=("Arial", 14))
             no_results_label.pack(pady=20)
 
     # Function to add a bookmark
@@ -185,7 +187,7 @@ class UniCourseSearchPage:
         conn.commit()
         conn.close()
 
-        messagebox.showinfo("Bookmark Added", f"Course '{course}' has been bookmarked.")
+        messagebox.showinfo("Bookmark Added", f"Course '{course}' has been bookmarked")
         self.search_courses()  # Refresh the course list to show the updated bookmarks
 
     # Function to remove a bookmark
@@ -197,7 +199,7 @@ class UniCourseSearchPage:
         conn.commit()
         conn.close()
 
-        messagebox.showinfo("Bookmark Removed", f"Course '{course}' has been removed from bookmarks.")
+        messagebox.showinfo("Bookmark Removed", f"Course '{course}' has been removed from bookmarks")
         self.search_courses()  # Refresh the course list to show the updated bookmarks
 
 if __name__ == "__main__":
@@ -214,5 +216,6 @@ if __name__ == "__main__":
     conn.commit()
     conn.close()
 
-    UniCourseSearchPage()
-
+    # Pass the student_id to the course search page
+    student_id = sys.argv[1] if len(sys.argv) > 1 else None
+    UniCourseSearchPage(student_id)
