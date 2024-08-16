@@ -1,4 +1,4 @@
-"""This file is the course search page for my app, Next Steps""""
+"""This file is the course search page for my app, Next Steps"""
 import customtkinter as ctk
 from tkinter import messagebox
 from PIL import Image, ImageTk
@@ -6,7 +6,6 @@ import sqlite3
 import subprocess
 import sys
 
-# Using a class for the course search page because it's is own window
 class UniCourseSearchPage:
     """Using a class for the course search page because it's is own window
     """
