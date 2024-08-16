@@ -1,3 +1,4 @@
+"""This file is the credit summary page for my app, Next Steps""""
 import customtkinter
 import customtkinter as ctk
 from tkinter import messagebox
@@ -8,9 +9,11 @@ import sys
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 
-# Function to fetch the users details such as student ID and subjects from 'user.db'
-# instead of creating a new database, all details is all in the same database
 def fetch_subject_details(student_id):
+    """Function to fetch the users details such as
+    student ID and subjects from 'user.db' instead of creating a new database,
+    all details is all in the same database
+    """
     with sqlite3.connect("users.db") as connection:
         cursor = connection.cursor()
         cursor.execute('''
@@ -27,8 +30,10 @@ def fetch_subject_details(student_id):
         subjects = user_data[1:]
         return year_level, subjects
 
-# Function to fetch all assessment/standard data from all_standards.py and all_standards SQL table
 def fetch_assessments(subject_code):
+    """Function to fetch all assessment/standard data
+    from all_standards.py/all_standards SQL table
+    """
     with sqlite3.connect("users.db") as connection:
         cursor = connection.cursor()
         cursor.execute("""
@@ -39,8 +44,9 @@ def fetch_assessments(subject_code):
         assessments = cursor.fetchall()
     return assessments
 
-# Function to create a table where the users progress can be tracked
 def create_grades_table():
+    """Function to create a table where the users progress can be tracked
+    """
     with sqlite3.connect("users.db") as connection:
         cursor = connection.cursor()
         cursor.execute('''
@@ -55,8 +61,10 @@ def create_grades_table():
         ''')
         connection.commit()
 
-# Function to fetch the user input data to enter in pie charts and progress bars
 def fetch_grades_data(student_id):
+    """Function to fetch the user input data to enter
+    in pie charts and progress bars
+    """
     with sqlite3.connect("users.db") as connection:
         cursor = connection.cursor()
         cursor.execute('''
@@ -70,6 +78,8 @@ def fetch_grades_data(student_id):
 
 # Function to fetch only the grades and credits in 'grades' table in users.db
 def fetch_grade_data():
+    """Function to fetch only the grades and credits in 'grades' table in users.db
+    """
     conn = sqlite3.connect('users.db')
     cursor = conn.cursor()
 
@@ -79,15 +89,21 @@ def fetch_grade_data():
     conn.close()
     return grade_data
 
-# Used a class for the credit summary window to make the code easier to work with
-# when add more features that require other windows
+
 class CreditSummaryWindow:
+    """Used a class for the credit summary window to make the code
+    easier to work withwhen add more features that require other windows
+    """
     def __init__(self, student_id):
+        """Initialising attributes of the object
+         Makes it easier when I will assign attributes and methods
+         """
         self.student_id = student_id
         self.root = ctk.CTk()
         self.root.title("NCEA Credit Summary")
         self.root.geometry("1440x900")
-        self.saved_grades = {}  # Storing saved grades
+        self.saved_grades = {}
+        # Storing saved grades in a list
 
         create_grades_table()
 
@@ -99,7 +115,7 @@ class CreditSummaryWindow:
         nav_frame = ctk.CTkFrame(self.root, width=200)
         nav_frame.pack(side="left", fill="y")
 
-        self.overlay_image(nav_frame)
+        self.logo_image(nav_frame)
 
         # Main content frame
         self.main_frame = ctk.CTkFrame(self.root)
@@ -123,16 +139,20 @@ class CreditSummaryWindow:
                 button = ctk.CTkButton(nav_frame, text=button_text, width=150,
                                        command=lambda f=frame: self.show_frame(f))
             elif button_text == "Credit Summary":
-                button = ctk.CTkButton(nav_frame, text=button_text, width=150, command=self.open_credit_summary)
+                button = ctk.CTkButton(nav_frame, text=button_text, width=150,
+                                       command=self.open_credit_summary)
             elif button_text == "Course Search":
-                button = ctk.CTkButton(nav_frame, text=button_text, width=150, command=self.open_course_search)
+                button = ctk.CTkButton(nav_frame, text=button_text, width=150,
+                                       command=self.open_course_search)
             elif button_text == "Home":
-                button = ctk.CTkButton(nav_frame, text=button_text, width=150, command=self.open_home)
+                button = ctk.CTkButton(nav_frame, text=button_text, width=150,
+                                       command=self.open_home)
             else:
                 button = ctk.CTkButton(nav_frame, text=button_text, width=150)
             button.pack(pady=10)
 
-        # Fetch data from the database and see if the student ID matches for the window to open
+        # Fetch data from the database and see if the student ID
+        # matches for the window to open
         result = fetch_subject_details(student_id)
         if result:
             year_level, subjects = result
@@ -144,7 +164,7 @@ class CreditSummaryWindow:
         self.root.mainloop()
 
     # Function of the logo image on the navigation bar
-    def overlay_image(self, nav_frame):
+    def logo_image(self, nav_frame):
         my_img = Image.open("/Users/nguyennguyen/Desktop/NSLogo.png")
         resized = my_img.resize((200, 200), Image.LANCZOS)
         new_pic = ImageTk.PhotoImage(resized)
@@ -155,7 +175,7 @@ class CreditSummaryWindow:
     # Function when button is clicked, the landing page script will run
     def open_home(self):
         self.root.destroy()  # Close the current window
-        subprocess.run(["python3", "flandingpg.py", self.student_id])  # Replace 'landingpagetest.py' with 'flandingpg.py'
+        subprocess.run(["python3", "flandingpg.py", self.student_id])
 
     # Function when button is clicked, the course search script will run
     def open_course_search(self):
@@ -177,11 +197,13 @@ class CreditSummaryWindow:
             "13NA": "Extra Subject"
         }
 
+        # Title of page and disclaimer under
         title_font = ctk.CTkFont(size=20, weight="bold")
         ctk.CTkLabel(frame, text="NCEA Credit Summary", font=title_font).pack(pady=20)
 
         ctk.CTkLabel(frame,
-                     text="IMPORTANT: Please only enter your grades when it is FINAL. You cannot change grades after saving.",
+                     text="IMPORTANT: Please only enter your grades when it is FINAL. "
+                          "You cannot change grades after saving.",
                      font=ctk.CTkFont(size=12, weight="bold")).pack(pady=10)
 
         # Creating another frame above the table frame for the pie chart and progress bars to place
@@ -191,7 +213,10 @@ class CreditSummaryWindow:
         self.table_frame = ctk.CTkFrame(frame)
         self.table_frame.pack(pady=5, padx=5, fill="both", expand=True)
 
-        ctk.CTkButton(frame, text="Show NCEA Progress", command=self.update_pie_chart).pack(pady=10)
+        # Button to show the progress bars, credits table, and pie chart
+        # Will run update_pie_chart when clicked
+        ctk.CTkButton(frame, text="Show NCEA Progress",
+                      command=self.update_pie_chart).pack(pady=10)
 
         # Set weights for each column to distribute space
         self.table_frame.columnconfigure(0, weight=1)
@@ -200,34 +225,44 @@ class CreditSummaryWindow:
         self.table_frame.columnconfigure(3, weight=1)
         self.table_frame.columnconfigure(4, weight=2)
 
-        # Table GUI. Instead of having a label for each header, used i to assign and index the headers in a loop
+        # Table GUI. Instead of having a label for each header,
+        # used i to assign and index the headers in a loop
         # This simplfies the code so it is easier to understand
-        headers = ["Subject Code", "Assessment Description", "Assessment Type", "Credits Available", "Grade Achieved"]
+        headers = ["Subject Code", "Assessment Description", "Assessment Type",
+                   "Credits Available", "Grade Achieved"]
         for col, header in enumerate(headers):
-            ctk.CTkLabel(self.table_frame, text=header, font=title_font, width=10).grid(row=0, column=col, padx=10, pady=10)
+            (ctk.CTkLabel(self.table_frame, text=header, font=title_font, width=10).grid
+             (row=0, column=col, padx=10, pady=10))
 
-        # Dictionaries and lists to store the users grade input, the assessment widgets (entry label), and subject labels
+        # Dictionaries and lists to store the users grade input,
+        # the assessment widgets (entry label), and subject labels
         self.grade_entries = {}
         self.assessment_widgets = {}
         self.subject_labels = []
 
-        # This loop takes the subject code the user inputted in the registration form
-        # and combines it with the subject description from the assessment table and displays it in the table
+        # This loop takes the subject code the user
+        # inputted in the registration form
+        # and combines it with the subject description from
+        # the assessment table and displays it in the table
         for row, subject_code in enumerate(subjects, start=1):
             if subject_code:
-                full_subject = f"{year_level}{subject_code} - {subject_details.get(f'{year_level}{subject_code}', 'Unknown Subject')}"
+                full_subject = f"{year_level}{subject_code} - {subject_details.get
+                (f'{year_level}{subject_code}', 'Unknown Subject')}"
                 subject_label = ctk.CTkLabel(self.table_frame, text=full_subject)
                 subject_label.grid(row=row, column=0, padx=5, pady=5)
 
-                # This is binding an action to a widget. In this case when the user left clicks on the label,
+                # This is binding an action to a widget.
+                # In this case when the user left clicks on the label,
                 # the function runs
                 self.subject_labels.append(subject_label)
                 self.assessment_widgets[subject_code] = []
                 subject_label.bind("<Button-1>",
-                                   lambda e, sc=f"{year_level}{subject_code}", r=row: self.toggle_assessment_display(sc,r))
+                                   lambda e, sc=f"{year_level}{subject_code}",
+                                          r=row: self.toggle_assessment_display(sc,r))
 
     # Function to show the assessment data
-    # This is for when the subject is clicked, the assessments of the subject will show in the table
+    # This is for when the subject is clicked,
+    # the assessments of the subject will show in the table
     # All other subjects will hide
     def toggle_assessment_display(self, subject_code, row):
         # Hide all widgets first
@@ -245,14 +280,17 @@ class CreditSummaryWindow:
 
         self.last_opened = subject_code
         assessments = fetch_assessments(subject_code)
-        self.assessment_widgets[subject_code] = []  # Clear existing widgets for this subject
+        self.assessment_widgets[subject_code] = []
+        # Clear existing widgets for this subject
 
+        # For loop for to list all the assessment/standards
+        # data and display them in a table
         for a, assessment in enumerate(assessments):
             row_offset = row + a + 1
 
             # Labels for all columns of the subject table
-            description_label = ctk.CTkLabel(self.table_frame, text=assessment[0], anchor="w", wraplength=300,
-                                             width=300)
+            description_label = ctk.CTkLabel(self.table_frame,
+                                             text=assessment[0], anchor="w", wraplength=300, width=300)
             description_label.grid(row=row_offset, column=1, padx=5, pady=5)
 
             type_label = ctk.CTkLabel(self.table_frame, text=assessment[1], width=50)
@@ -261,6 +299,9 @@ class CreditSummaryWindow:
             credits_label = ctk.CTkLabel(self.table_frame, text=assessment[2], width=50)
             credits_label.grid(row=row_offset, column=3, padx=5, pady=5)
 
+            # If loop to if the a grade has already been entered
+            # which will show the users input
+            # Else it would display an entry field
             key = f"{subject_code}_{a}"
             if key in self.saved_grades:
                 grade_label = ctk.CTkLabel(self.table_frame, text=self.saved_grades[key])
@@ -272,19 +313,25 @@ class CreditSummaryWindow:
 
             # Add the "Grade Achieved" entry widget and save button
             save_button_row = row + len(assessments) + 1
-            ctk.CTkButton(self.table_frame, text="Save Grades", command=self.save_grades).grid(row=save_button_row,
-                                                                                               columnspan=5, pady=5)
+            ctk.CTkButton(self.table_frame, text="Save Grades",
+                          command=self.save_grades).grid(row=save_button_row, columnspan=5, pady=5)
             # Store the widgets
-            self.assessment_widgets[subject_code].extend(self.table_frame.grid_slaves(row=row_offset))
+            (self.assessment_widgets[subject_code].extend
+             (self.table_frame.grid_slaves(row=row_offset)))
 
         for key, (grade_label, row, column) in self.grade_labels.items():
             grade_label.grid(row=row, column=column, padx=5, pady=5)
 
+        """Calculating the rank score based on the grade_data
+        the user has inputted in fcreditspg.py which is
+        stored in the 'grades' table in 'user's db'
+        """
     def calculate_scores(self, grade_data):
         excellence_credits = 0
         merit_credits = 0
         achieved_credits = 0
 
+        # For loop to calculate each different credits for the progress bars
         for grade, credits in grade_data:
             if grade == 'E':
                 excellence_credits += credits
@@ -295,6 +342,8 @@ class CreditSummaryWindow:
 
         total_credits = excellence_credits + merit_credits + achieved_credits
 
+        # If and else loop to see and calculate the best 80 credits
+        # out of E, M and A credits.
         if total_credits > 80:
             if excellence_credits >= 80:
                 best_excellence_credits = 80
@@ -316,10 +365,12 @@ class CreditSummaryWindow:
             best_merit_credits = merit_credits
             best_achieved_credits = achieved_credits
 
+        # Calculating rank score for each grade type of credits
         rank_score_excellence = best_excellence_credits * 4
         rank_score_merit = best_merit_credits * 3
         rank_score_achieved = best_achieved_credits * 2
 
+        # Total rank score when all are added together
         total_rank_score = rank_score_excellence + rank_score_merit + rank_score_achieved
 
         return (
@@ -358,10 +409,14 @@ class CreditSummaryWindow:
         merit_credits = grades.get("M", 0)
         excellence_credits = grades.get("E", 0)
 
+        # Calulating the credits for the table
+        # Following NCEA that E credits also count as M credits and so on.
         merit_total = merit_credits + excellence_credits
         achieved_total = achieved_credits + merit_credits + excellence_credits
         total_credits = achieved_total
 
+        # Taking the return from calculate_scores function and
+        # assigning it to grade data variable
         grade_data = fetch_grade_data()
         (
             excellence_credits, merit_credits, achieved_credits,
@@ -370,37 +425,46 @@ class CreditSummaryWindow:
             total_rank_score
         ) = self.calculate_scores(grade_data)
 
-        # Left Section: Progress Bars
+        # Left Side: Progress Bars
         progress_bar_frame = ctk.CTkFrame(self.chart_frame)
         progress_bar_frame.grid(row=0, column=0, padx=20, pady=10, sticky="nsew")
 
-        self.create_progress_bar("Achieved Endorsement", achieved_total, 50, parent=progress_bar_frame)
-        self.create_progress_bar("Merit Endorsement", merit_total, 50, parent=progress_bar_frame)
-        self.create_progress_bar("Excellence Endorsement", excellence_credits, 50, parent=progress_bar_frame)
-        self.create_progress_bar("NCEA Level Certificate", total_credits, 80, parent=progress_bar_frame)
+        self.create_progress_bar("Achieved Endorsement", achieved_total, 50,
+                                 parent=progress_bar_frame)
+        self.create_progress_bar("Merit Endorsement", merit_total, 50,
+                                 parent=progress_bar_frame)
+        self.create_progress_bar("Excellence Endorsement", excellence_credits, 50,
+                                 parent=progress_bar_frame)
+        self.create_progress_bar("NCEA Level Certificate", total_credits, 80,
+                                 parent=progress_bar_frame)
 
-        # Center Section: Rank Score Table
+        # Center: Rank Score Table
         rank_score_frame = ctk.CTkFrame(self.chart_frame)
         rank_score_frame.grid(row=0, column=1, padx=20, pady=10, sticky="nsew")
 
         headers = ["", "Excellence Credits", "Merit Credits", "Achieved Credits"]
         data = [
-            ["Number of Credits", excellence_credits, merit_credits, achieved_credits],
-            ["Best 80 Credits", best_excellence_credits, best_merit_credits, best_achieved_credits],
-            ["Rank Score", rank_score_excellence, rank_score_merit, rank_score_achieved],
+            ["Number of Credits", excellence_credits, merit_credits,
+             achieved_credits],
+            ["Best 80 Credits", best_excellence_credits, best_merit_credits,
+             best_achieved_credits],
+            ["Rank Score", rank_score_excellence, rank_score_merit,
+             rank_score_achieved],
             ["Total Rank Score", total_rank_score, "", ""]
         ]
 
+        # For loop to display the rank score table headers
         for i, header in enumerate(headers):
             label = ctk.CTkLabel(rank_score_frame, text=header, anchor="w")
             label.grid(row=0, column=i, padx=10, pady=5, sticky="w")
 
+        # Foor loop for the values/integer of the credits
         for row_index, row in enumerate(data):
             for col_index, value in enumerate(row):
                 label = ctk.CTkLabel(rank_score_frame, text=value, anchor="w")
                 label.grid(row=row_index + 1, column=col_index, padx=10, pady=5, sticky="w")
 
-        # Right Section: Pie Chart
+        # Right Side: Pie Chart
         pie_chart_frame = ctk.CTkFrame(self.chart_frame)
         pie_chart_frame.grid(row=0, column=2, padx=20, pady=10, sticky="nsew")
 
@@ -434,12 +498,14 @@ class CreditSummaryWindow:
             "E": "EXCELLENCE"
         }
 
+        # checking to see if the grade the user has entered is one of the four grades
         for key, entry in list(self.grade_entries.items()):
             grade = entry.get().strip().upper()
             if grade not in valid_grades:
                 messagebox.showerror("Invalid Grade", "Please enter a valid grade: NA, A, M, or E.")
                 return
 
+            #
             if grade:
                 subject_code, assessment_index = key.rsplit("_", 1)
                 assessments = fetch_assessments(subject_code)
@@ -456,13 +522,17 @@ class CreditSummaryWindow:
                     ''', (student_id, subject_code, assessment_description))
                     existing_grade = cursor.fetchone()
 
+                    #Message that indicated the a grade has already been
+                    # entered in the users.db database, grades table
                     if existing_grade:
                         messagebox.showinfo("Grade Already Entered",
-                                            f"Grade '{valid_grades[existing_grade[0]]}' has already been entered for this assessment.")
+                                            f"Grade '{valid_grades[existing_grade[0]]}' "
+                                            f"has already been entered for this assessment.")
                     else:
                         # Save the new grade if not already entered
                         cursor.execute('''
-                            INSERT INTO grades (student_id, subject_code, assessment_description, grade, credits)
+                            INSERT INTO grades (student_id, subject_code, 
+                            assessment_description, grade, credits)
                             VALUES (?, ?, ?, ?, ?)
                         ''', (student_id, subject_code, assessment_description, grade, assessment[2]))
                         connection.commit()
@@ -475,7 +545,8 @@ class CreditSummaryWindow:
 
                         grade_label = ctk.CTkLabel(self.table_frame, text=valid_grades[grade])
                         grade_label.grid(row=row, column=4, padx=5, pady=5)
-                        self.grade_labels[key] = (grade_label, entry.grid_info()["row"], entry.grid_info()["column"])
+                        self.grade_labels[key] = (grade_label, entry.grid_info()["row"],
+                                                  entry.grid_info()["column"])
                         del self.grade_entries[key]
 
         self.update_pie_chart()
