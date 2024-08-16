@@ -1,3 +1,4 @@
+"""This file is the course search page for my app, Next Steps""""
 import customtkinter as ctk
 from tkinter import messagebox
 from PIL import Image, ImageTk
@@ -5,9 +6,14 @@ import sqlite3
 import subprocess
 import sys
 
-# Using a class for the course search page because it is a window
+# Using a class for the course search page because it's is own window
 class UniCourseSearchPage:
+    """Using a class for the course search page because it's is own window
+    """
     def __init__(self, student_id):
+        """Creating a window based on the student id
+        and initialising attributes of the object so
+        that assigning and calling methods become easier"""
         self.student_id = student_id
         self.root = ctk.CTk()
         self.root.title("University Course Search")
@@ -21,7 +27,7 @@ class UniCourseSearchPage:
         nav_frame = ctk.CTkFrame(self.root, width=200)
         nav_frame.pack(side="left", fill="y")
 
-        self.overlay_image(nav_frame)
+        self.logo_image(nav_frame)
 
         # Navigation buttons
         buttons = [
@@ -31,7 +37,8 @@ class UniCourseSearchPage:
         ]
 
         for button_text, command in buttons:
-            button = ctk.CTkButton(nav_frame, text=button_text, width=150, command=command)
+            button = ctk.CTkButton(nav_frame, text=button_text, width=150,
+                                   command=command)
             button.pack(pady=10)
 
         # Main content frame
@@ -44,15 +51,16 @@ class UniCourseSearchPage:
         self.root.mainloop()
 
     # Function to display the logo image on the navigation bar
-    def overlay_image(self, nav_frame):
-        my_img = Image.open("/Users/nguyennguyen/Desktop/NSLogo.png")  # Update the path
+    def logo_image(self, nav_frame):
+        my_img = Image.open("/Users/nguyennguyen/Desktop/NSLogo.png")
         resized = my_img.resize((200, 200), Image.LANCZOS)
         new_pic = ImageTk.PhotoImage(resized)
         label = ctk.CTkLabel(nav_frame, image=new_pic, text="")
         label.image = new_pic
         label.pack()
 
-    # Function to run/redirect user to the landing page when button is clicked, this function runs
+    # Function to run/redirect user to the landing
+    # page when button is clicked, this function runs
     def open_home(self):
         self.root.destroy()
         subprocess.run(["python3", "flandingpg.py", self.student_id])
@@ -77,8 +85,11 @@ class UniCourseSearchPage:
 
         # Lists of universities in an CTkOptionMenu
         self.university_var = ctk.StringVar()
-        university_options = ["University of Auckland", "Auckland University of Technology", "University of Otago"]
-        university_menu = ctk.CTkOptionMenu(filter_frame, variable=self.university_var, values=university_options)
+        university_options = ["University of Auckland",
+                              "Auckland University of Technology",
+                              "University of Otago"]
+        university_menu = ctk.CTkOptionMenu(filter_frame, variable=self.university_var,
+                                            values=university_options)
         university_menu.grid(row=0, column=1, padx=10, pady=10, sticky="w")
 
         # Subject filter
@@ -87,12 +98,16 @@ class UniCourseSearchPage:
 
         # Lists of uni faculties/subjects in an CTkOptionMenu
         self.subject_var = ctk.StringVar()
-        subject_options = ["Arts", "Business, Commerce, and Finance", "CADI", "Engineering", "Health, Medicine, and Biomedical Science", "Law", "Technology, Maths, and Science"]
-        subject_menu = ctk.CTkOptionMenu(filter_frame, variable=self.subject_var, values=subject_options)
+        subject_options = ["Arts", "Business, Commerce, and Finance",
+                           "CADI", "Engineering", "Health, Medicine, and Biomedical Science",
+                           "Law", "Technology, Maths, and Science"]
+        subject_menu = ctk.CTkOptionMenu(filter_frame, variable=self.subject_var,
+                                         values=subject_options)
         subject_menu.grid(row=1, column=1, padx=10, pady=10, sticky="w")
 
         # Search button
-        search_button = ctk.CTkButton(filter_frame, text="Search Courses", command=self.search_courses)
+        search_button = ctk.CTkButton(filter_frame, text="Search Courses",
+                                      command=self.search_courses)
         search_button.grid(row=2, columnspan=2, pady=20)
 
         # Results frame
@@ -103,6 +118,7 @@ class UniCourseSearchPage:
         self.display_bookmarked_courses()
 
     # Function to display bookmarked courses
+    # Fetches bookmarks from the bookmarks table in 'users.db'
     def display_bookmarked_courses(self):
         conn = sqlite3.connect("users.db")
         cursor = conn.cursor()
@@ -112,8 +128,12 @@ class UniCourseSearchPage:
 
         conn.close()
 
+        # If loop for when there is a bookmarked course in the table,
+        # it will create a label for it with a remove button
+        # that runs the remove_bookmark function
         if bookmarks:
-            bookmark_label = ctk.CTkLabel(self.results_frame, text="Bookmarked Courses", font=("Arial", 16, "bold"))
+            bookmark_label = ctk.CTkLabel(self.results_frame, text="Bookmarked Courses",
+                                          font=("Arial", 16, "bold"))
             bookmark_label.pack(pady=10)
 
             for course, university, subject in bookmarks:
@@ -143,12 +163,13 @@ class UniCourseSearchPage:
         conn = sqlite3.connect("users.db")
         cursor = conn.cursor()
 
-        cursor.execute("SELECT course, description, rank_score FROM all_courses WHERE university=? AND subject=?", (university, subject))
+        cursor.execute("SELECT course, description, rank_score FROM all_courses "
+                       "WHERE university=? AND subject=?", (university, subject))
         courses = cursor.fetchall()
 
         conn.close()
 
-        # Display search results
+        # Display search results according to the filters/options the user select
         if courses:
             for course, description, rank_score in courses:
                 # Create a frame for each course to hold the dropdown
@@ -159,31 +180,38 @@ class UniCourseSearchPage:
                 course_label = ctk.CTkLabel(course_frame, text=course, font=("Arial", 14))
                 course_label.pack(anchor="w", side="left")
 
-                # Add a bookmark button
+                # Add a bookmark button which will run the add_bookmark function
                 bookmark_button = ctk.CTkButton(course_frame, text="Bookmark", width=100,
-                                                command=lambda c=course, u=university, s=subject: self.add_bookmark(c, u, s))
+                                                command=lambda c=course, u=university,
+                                                               s=subject: self.add_bookmark(c, u, s))
                 bookmark_button.pack(anchor="e", side="right")
 
-                # Add a dropdown to show course details
+                # Added a dropdown menu to show course details and requirements/rankscore
                 details_frame = ctk.CTkFrame(course_frame)
                 details_frame.pack(fill="x", padx=20)
 
-                # Course description and rank score
-                description_label = ctk.CTkLabel(details_frame, text=f"Description: {description}", font=("Arial", 12))
+                # Course description and rank score labels
+                description_label = ctk.CTkLabel(details_frame,
+                                                 text=f"Description: {description}", font=("Arial", 12))
                 description_label.pack(anchor="w")
 
-                rank_score_label = ctk.CTkLabel(details_frame, text=f"Entry Requirements: Rank Score {rank_score}", font=("Arial", 12))
+                rank_score_label = ctk.CTkLabel(details_frame,
+                                                text=f"Entry Requirements: Rank Score "
+                                                     f"{rank_score}", font=("Arial", 12))
                 rank_score_label.pack(anchor="w")
         else:
-            no_results_label = ctk.CTkLabel(self.results_frame, text="No courses found", font=("Arial", 14))
+            no_results_label = ctk.CTkLabel(self.results_frame,
+                                            text="No courses found", font=("Arial", 14))
             no_results_label.pack(pady=20)
 
     # Function to add a bookmark
+    # INSERT INTO function to add to the table
     def add_bookmark(self, course, university, subject):
         conn = sqlite3.connect("users.db")
         cursor = conn.cursor()
 
-        cursor.execute("INSERT INTO bookmarks (course, university, subject) VALUES (?, ?, ?)", (course, university, subject))
+        cursor.execute("INSERT INTO bookmarks (course, university, subject) VALUES (?, ?, ?)",
+                       (course, university, subject))
         conn.commit()
         conn.close()
 
@@ -191,6 +219,7 @@ class UniCourseSearchPage:
         self.search_courses()  # Refresh the course list to show the updated bookmarks
 
     # Function to remove a bookmark
+    # Editing the table using DELETE and shows a message box that bookmark has been removed
     def remove_bookmark(self, course):
         conn = sqlite3.connect("users.db")
         cursor = conn.cursor()
@@ -199,7 +228,8 @@ class UniCourseSearchPage:
         conn.commit()
         conn.close()
 
-        messagebox.showinfo("Bookmark Removed", f"Course '{course}' has been removed from bookmarks")
+        messagebox.showinfo("Bookmark Removed",
+                            f"Course '{course}' has been removed from bookmarks")
         self.search_courses()  # Refresh the course list to show the updated bookmarks
 
 if __name__ == "__main__":
