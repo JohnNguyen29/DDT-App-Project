@@ -8,6 +8,29 @@ import sys
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 
+def fetch_grades_data(student_id):
+    with sqlite3.connect("users.db") as connection:
+        cursor = connection.cursor()
+        cursor.execute('''
+            SELECT grade, SUM(credits) 
+            FROM grades 
+            WHERE student_id = ? 
+            GROUP BY grade
+        ''', (student_id,))
+        data = cursor.fetchall()
+    return data
+
+# Function to fetch only the grades and credits in 'grades' table in users.db
+def fetch_grade_data():
+    conn = sqlite3.connect('users.db')
+    cursor = conn.cursor()
+
+    cursor.execute("SELECT grade, credits FROM grades")
+    grade_data = cursor.fetchall()
+
+    conn.close()
+    return grade_data
+
 # Using a class for the home/landing page because it is its own window
 class HomePage:
     def __init__(self, student_id):
@@ -84,6 +107,150 @@ class HomePage:
 
         # Bottom frame content
         self.display_bookmarked_courses(bottom_frame)
+
+        ctk.CTkButton(self.top_frame, text="Show NCEA Progress", command=self.update_pie_chart).pack(pady=10)
+
+    def calculate_scores(self, grade_data):
+        excellence_credits = 0
+        merit_credits = 0
+        achieved_credits = 0
+
+        for grade, credits in grade_data:
+            if grade == 'E':
+                excellence_credits += credits
+            elif grade == 'M':
+                merit_credits += credits
+            elif grade == 'A':
+                achieved_credits += credits
+
+        total_credits = excellence_credits + merit_credits + achieved_credits
+
+        if total_credits > 80:
+            if excellence_credits >= 80:
+                best_excellence_credits = 80
+                best_merit_credits = 0
+                best_achieved_credits = 0
+            else:
+                best_excellence_credits = excellence_credits
+                remaining_credits = 80 - best_excellence_credits
+
+                if (best_excellence_credits + merit_credits) >= 80:
+                    best_merit_credits = remaining_credits
+                    best_achieved_credits = 0
+                else:
+                    best_merit_credits = merit_credits
+                    remaining_credits -= merit_credits
+                    best_achieved_credits = min(achieved_credits, remaining_credits)
+        else:
+            best_excellence_credits = excellence_credits
+            best_merit_credits = merit_credits
+            best_achieved_credits = achieved_credits
+
+        rank_score_excellence = best_excellence_credits * 4
+        rank_score_merit = best_merit_credits * 3
+        rank_score_achieved = best_achieved_credits * 2
+
+        total_rank_score = rank_score_excellence + rank_score_merit + rank_score_achieved
+
+        return (
+            excellence_credits, merit_credits, achieved_credits,
+            best_excellence_credits, best_merit_credits, best_achieved_credits,
+            rank_score_excellence, rank_score_merit, rank_score_achieved,
+            total_rank_score
+        )
+
+    # Function to update the pie chart when the user enters a grade
+    # Modified function to update the pie chart and progress bars
+    def update_pie_chart(self):
+        # Clear any existing widgets in top_frame
+        for widget in self.top_frame.winfo_children():
+            widget.destroy()
+
+        # Configure grid layout for top_frame
+        self.top_frame.grid_columnconfigure(0, weight=1)
+        self.top_frame.grid_columnconfigure(1, weight=2)
+        self.top_frame.grid_columnconfigure(2, weight=1)
+        self.top_frame.grid_rowconfigure(0, weight=1)
+
+        with sqlite3.connect("users.db") as connection:
+            cursor = connection.cursor()
+            cursor.execute("""
+                SELECT grade, SUM(credits) 
+                FROM grades 
+                WHERE student_id = ? 
+                GROUP BY grade
+            """, (self.student_id,))
+            data = cursor.fetchall()
+
+        grades = {row[0]: row[1] for row in data}
+
+        achieved_credits = grades.get("A", 0)
+        merit_credits = grades.get("M", 0)
+        excellence_credits = grades.get("E", 0)
+
+        merit_total = merit_credits + excellence_credits
+        achieved_total = achieved_credits + merit_credits + excellence_credits
+        total_credits = achieved_total
+
+        grade_data = fetch_grade_data()
+        (
+            excellence_credits, merit_credits, achieved_credits,
+            best_excellence_credits, best_merit_credits, best_achieved_credits,
+            rank_score_excellence, rank_score_merit, rank_score_achieved,
+            total_rank_score
+        ) = self.calculate_scores(grade_data)
+
+        # Left Section: Progress Bars
+        progress_bar_frame = ctk.CTkFrame(self.top_frame)
+        progress_bar_frame.grid(row=0, column=0, padx=20, pady=10, sticky="nsew")
+
+        self.create_progress_bar("Achieved Endorsement", achieved_total, 50, parent=progress_bar_frame)
+        self.create_progress_bar("Merit Endorsement", merit_total, 50, parent=progress_bar_frame)
+        self.create_progress_bar("Excellence Endorsement", excellence_credits, 50, parent=progress_bar_frame)
+        self.create_progress_bar("NCEA Level Certificate", total_credits, 80, parent=progress_bar_frame)
+
+        # Center Section: Rank Score Table
+        rank_score_frame = ctk.CTkFrame(self.top_frame)
+        rank_score_frame.grid(row=0, column=1, padx=20, pady=10, sticky="nsew")
+
+        headers = ["", "Excellence Credits", "Merit Credits", "Achieved Credits"]
+        data = [
+            ["Number of Credits", excellence_credits, merit_credits, achieved_credits],
+            ["Best 80 Credits", best_excellence_credits, best_merit_credits, best_achieved_credits],
+            ["Rank Score", rank_score_excellence, rank_score_merit, rank_score_achieved],
+            ["Total Rank Score", total_rank_score, "", ""]
+        ]
+
+        for i, header in enumerate(headers):
+            label = ctk.CTkLabel(rank_score_frame, text=header, anchor="w")
+            label.grid(row=0, column=i, padx=10, pady=5, sticky="w")
+
+        for row_index, row in enumerate(data):
+            for col_index, value in enumerate(row):
+                label = ctk.CTkLabel(rank_score_frame, text=value, anchor="w")
+                label.grid(row=row_index + 1, column=col_index, padx=10, pady=5, sticky="w")
+
+        # Right Section: Pie Chart
+        pie_top_frame = ctk.CTkFrame(self.top_frame)
+        pie_top_frame.grid(row=0, column=2, padx=20, pady=10, sticky="nsew")
+
+        fig, ax = plt.subplots(figsize=(2, 2))  # Adjust the size of the pie chart
+        ax.pie([achieved_credits, merit_credits, excellence_credits],
+               labels=["Achieved", "Merit", "Excellence"], autopct='%1.1f%%', startangle=90)
+
+        chart = FigureCanvasTkAgg(fig, master=pie_top_frame)
+        chart.get_tk_widget().pack(expand=True, fill="both")
+
+        chart.draw()
+
+    # Modified function to create and update a progress bar with a parent frame parameter
+    def create_progress_bar(self, label_text, value, max_value, parent, total=False):
+        label_font = ctk.CTkFont(size=14, weight="bold") if total else None
+        ctk.CTkLabel(parent, text=f"{label_text} ({value}/{max_value})", font=label_font).pack(pady=5)
+
+        progress_bar = ctk.CTkProgressBar(parent, height=30 if total else None)
+        progress_bar.set(value / max_value)  # Set the progress (value/max_value)
+        progress_bar.pack(pady=5, fill="x")
 
     # Function to display bookmarked courses in the bottom frame
     def display_bookmarked_courses(self, frame):
