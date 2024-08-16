@@ -57,7 +57,7 @@ class LoginFront:
         self.button_font = ctk.CTkFont(size=14)
 
         # Added a logo to the login page. Example on GC
-        self.logo_image = Image.open("/users/nguyennguyen/desktop/NSLogo.png")
+        self.logo_image = Image.open("/users/nguyennguyen/desktop/DDT/NSLogo.png")
         self.logo = ctk.CTkImage(self.logo_image, size=(210, 206))
         self.logo_label = ctk.CTkLabel(self.root, image=self.logo, text="")
         self.logo_label.pack(pady=10)

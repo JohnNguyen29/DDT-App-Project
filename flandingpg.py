@@ -92,7 +92,7 @@ class HomePage:
 
     # Function to display the logo image on the navigation bar
     def logo_image(self, nav_frame):
-        my_img = Image.open("/Users/nguyennguyen/Desktop/NSLogo.png")
+        my_img = Image.open("/Users/nguyennguyen/Desktop/DDT/NSLogo.png")
         resized = my_img.resize((200, 200), Image.LANCZOS)
         new_pic = ImageTk.PhotoImage(resized)
         label = ctk.CTkLabel(nav_frame, image=new_pic, text="")
